@@ -1,0 +1,1665 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PRDP Financial Dashboard — DA-RFO1</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root {
+  --bg:#F0F4F8; --surface:#FFFFFF; --surface2:#EBF0F6; --border:#D5DCE8;
+  --text:#162030; --text2:#4A5D72; --muted:#8598AB;
+  --green:#1A6B3A; --green-bg:#E5F3EC; --green-dk:#155230;
+  --amber:#7A4800; --amber-bg:#FEF1D8;
+  --red:#8B1A1A; --red-bg:#FCEAEA;
+  --blue:#1349A0; --blue-bg:#E0EBFF;
+  --accent:#1558C0; --accent-lt:#E6EEFF;
+  --shadow:0 1px 6px rgba(0,0,0,.08); --r:10px; --r-sm:6px;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;}
+
+/* HEADER */
+.hdr{background:var(--surface);border-bottom:3px solid var(--green);padding:0 28px;height:62px;display:flex;align-items:center;gap:14px;position:sticky;top:0;z-index:200;box-shadow:var(--shadow);}
+.hdr-seal{width:40px;height:40px;flex-shrink:0;}
+.hdr-info{flex:1;}
+.hdr-title{font-size:15px;font-weight:800;color:var(--green);}
+.hdr-sub{font-size:11px;color:var(--text2);}
+.hdr-right{text-align:right;font-size:11px;color:var(--muted);}
+.hdr-right b{display:block;font-size:13px;color:var(--text);font-weight:700;}
+
+/* TAB BAR */
+.tab-bar{background:var(--surface);border-bottom:1px solid var(--border);padding:0 28px;display:flex;gap:0;position:sticky;top:62px;z-index:150;box-shadow:0 1px 4px rgba(0,0,0,.05);}
+.tab-btn{padding:12px 22px;font-size:13px;font-weight:700;color:var(--muted);border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;margin-bottom:-1px;transition:color .15s,border-color .15s;display:flex;align-items:center;gap:7px;}
+.tab-btn:hover{color:var(--accent);}
+.tab-btn.active{color:var(--accent);border-bottom-color:var(--accent);}
+.tab-pill{font-size:10px;font-weight:800;padding:2px 7px;border-radius:10px;background:var(--accent-lt);color:var(--accent);}
+.tab-btn.active .tab-pill{background:var(--accent);color:#fff;}
+
+/* TAB PANELS */
+.tab-panel{display:none;flex:1;flex-direction:column;}
+.tab-panel.active{display:flex;flex-direction:column;}
+
+/* UPLOAD SCREEN */
+.upload-screen{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:40px 20px;}
+.upload-screen.hidden{display:none;}
+.upload-hero{text-align:center;margin-bottom:28px;}
+.upload-hero h2{font-size:20px;font-weight:800;color:var(--text);margin-bottom:8px;}
+.upload-hero p{font-size:13px;color:var(--text2);max-width:440px;margin:0 auto;line-height:1.6;}
+.upload-zone{width:100%;max-width:500px;border:2.5px dashed var(--border);border-radius:var(--r);background:var(--surface);padding:36px 28px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;position:relative;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--accent);background:var(--accent-lt);}
+.upload-zone input{position:absolute;inset:0;opacity:0;cursor:pointer;width:100%;height:100%;}
+.upload-icon{font-size:44px;margin-bottom:10px;display:block;}
+.upload-zone h3{font-size:15px;font-weight:700;color:var(--text);margin-bottom:6px;}
+.upload-zone p{font-size:12px;color:var(--text2);}
+.upload-hint{margin-top:12px;font-size:11px;color:var(--muted);background:var(--surface2);padding:7px 14px;border-radius:var(--r-sm);}
+.steps{display:flex;gap:16px;margin-top:24px;max-width:500px;width:100%;}
+.step{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:12px 14px;text-align:center;}
+.step-num{width:24px;height:24px;background:var(--green);color:#fff;border-radius:50%;font-size:11px;font-weight:800;display:flex;align-items:center;justify-content:center;margin:0 auto 6px;}
+.step p{font-size:11px;color:var(--text2);line-height:1.5;}
+
+/* LOADING */
+.loading-screen{flex:1;display:none;flex-direction:column;align-items:center;justify-content:center;gap:18px;}
+.loading-screen.visible{display:flex;}
+.spinner{width:44px;height:44px;border:4px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .85s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-msg{font-size:15px;color:var(--text2);font-weight:600;}
+.loading-sub{font-size:12px;color:var(--muted);}
+.err-box{background:var(--red-bg);border:1px solid #f5b8b8;border-radius:var(--r);padding:14px 18px;max-width:500px;width:100%;margin-top:16px;}
+.err-box h4{color:var(--red);font-size:13px;margin-bottom:5px;}
+.err-box p{font-size:12px;color:var(--red);}
+.retry-btn{margin-top:10px;padding:7px 18px;background:var(--red);color:#fff;border:none;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;}
+
+/* DASHBOARD CHROME */
+.dash-body{display:none;padding:0 28px 48px;}
+.dash-body.visible{display:block;}
+.dash-toolbar{display:flex;align-items:center;gap:10px;margin:16px 0 12px;flex-wrap:wrap;}
+.reset-btn{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;background:var(--accent-lt);color:var(--accent);border:1px solid var(--accent);border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;}
+.reset-btn:hover{background:var(--accent);color:#fff;}
+.src-badge{display:inline-block;background:#FFF8E1;color:#7A5500;border:1px solid #F5D87A;font-size:11px;font-weight:700;padding:4px 10px;border-radius:var(--r-sm);}
+.as-of-tag{font-size:12px;color:var(--text2);margin-left:auto;}
+.as-of-tag b{color:var(--text);}
+.sec{font-size:10px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);margin:22px 0 12px;display:flex;align-items:center;gap:8px;}
+.sec::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* KPI */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:11px;}
+.kpi{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:14px 16px 12px;box-shadow:var(--shadow);}
+.kpi-lbl{font-size:11px;color:var(--text2);font-weight:500;margin-bottom:4px;}
+.kpi-val{font-size:21px;font-weight:900;letter-spacing:-.5px;line-height:1.1;}
+.kpi-val.g{color:var(--green);}.kpi-val.a{color:var(--amber);}.kpi-val.r{color:var(--red);}
+.kpi-sub{font-size:11px;color:var(--muted);margin-top:4px;}
+.kpi-bar{height:3px;background:var(--border);border-radius:2px;margin-top:10px;overflow:hidden;}
+.kpi-fill{height:100%;border-radius:2px;transition:width 1.2s ease;}
+
+/* CHARTS */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.g3{display:grid;grid-template-columns:2fr 1fr;gap:13px;}
+.card{background:var(--surface);border:1px solid var(--border);border-radius:var(--r);padding:18px 20px;box-shadow:var(--shadow);}
+.card.full{grid-column:1/-1;}
+.card-title{font-size:13px;font-weight:800;color:var(--text);margin-bottom:2px;}
+.card-sub{font-size:11px;color:var(--muted);margin-bottom:14px;}
+.cw{position:relative;}
+
+/* COMP BARS */
+.comp-sec-lbl{font-size:10px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--border);padding-bottom:5px;margin-bottom:10px;margin-top:14px;}
+.comp-sec-lbl:first-child{margin-top:0;}
+.comp-row{display:flex;align-items:center;gap:9px;margin-bottom:10px;}
+.comp-name{font-size:11px;font-weight:800;color:var(--text2);width:72px;flex-shrink:0;}
+.comp-track{flex:1;height:12px;background:var(--surface2);border-radius:6px;overflow:hidden;}
+.comp-fill{height:100%;border-radius:6px;transition:width 1.3s cubic-bezier(.4,0,.2,1);}
+.comp-pct{font-size:12px;font-weight:900;width:46px;flex-shrink:0;text-align:right;}
+.comp-amt{font-size:10px;color:var(--muted);width:62px;text-align:right;flex-shrink:0;}
+
+/* LEGEND */
+.leg{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.leg-i{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--text2);}
+.leg-d{width:10px;height:10px;border-radius:2px;flex-shrink:0;}
+
+/* ALERTS */
+.alerts{display:flex;flex-direction:column;gap:8px;}
+.alert-row{display:flex;align-items:flex-start;gap:10px;padding:10px 14px;border-radius:var(--r-sm);border-left:4px solid;font-size:12px;line-height:1.5;}
+.alert-row.red{background:var(--red-bg);border-color:#C0392B;color:var(--red);}
+.alert-row.amber{background:var(--amber-bg);border-color:#D4820A;color:var(--amber);}
+.alert-row.green{background:var(--green-bg);border-color:var(--green);color:var(--green-dk);}
+.alert-icon{font-size:15px;flex-shrink:0;margin-top:1px;}
+
+/* SUMMARY TABLE */
+.tbl-wrap{overflow-x:auto;}
+.tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:700px;}
+.tbl thead th{background:var(--surface2);color:var(--text2);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:9px 10px;border-bottom:2px solid var(--border);white-space:nowrap;}
+.tbl tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+.tbl tbody tr:hover{background:var(--accent-lt);}
+.tbl tbody td{padding:8px 10px;vertical-align:middle;}
+.tbl .n{text-align:right;font-variant-numeric:tabular-nums;}
+.tbl .gh td{background:var(--green);color:#fff;font-weight:800;font-size:13px;padding:9px 10px;}
+.tbl .sh td{background:var(--surface2);color:var(--muted);font-size:10px;font-weight:800;text-transform:uppercase;letter-spacing:.06em;padding:6px 10px;}
+.bdg{display:inline-block;font-size:10px;font-weight:800;padding:2px 8px;border-radius:4px;}
+.bdg-g{background:var(--green-bg);color:var(--green);}
+.bdg-a{background:var(--amber-bg);color:var(--amber);}
+.bdg-r{background:var(--red-bg);color:var(--red);}
+.bdg-b{background:var(--blue-bg);color:var(--blue);}
+.rate-w{display:flex;align-items:center;gap:5px;}
+.rate-trk{width:48px;height:5px;background:var(--border);border-radius:3px;overflow:hidden;flex-shrink:0;}
+.rate-f{height:100%;border-radius:3px;}
+
+/* ASA TABLE in summary */
+.asa-tbl{width:100%;border-collapse:collapse;font-size:12px;min-width:600px;}
+.asa-tbl thead th{background:var(--surface2);color:var(--text2);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:2px solid var(--border);white-space:nowrap;}
+.asa-tbl tbody tr{border-bottom:1px solid var(--border);transition:background .12s;}
+.asa-tbl tbody tr:hover{background:var(--accent-lt);}
+.asa-tbl tbody td{padding:8px 10px;vertical-align:middle;}
+.asa-tbl .n{text-align:right;font-variant-numeric:tabular-nums;}
+.asa-no{font-weight:700;color:var(--accent);font-size:11px;}
+.fund-tag{display:inline-block;font-size:10px;font-weight:800;padding:2px 7px;border-radius:4px;}
+.lp{background:var(--blue-bg);color:var(--blue);}
+.gop{background:var(--green-bg);color:var(--green);}
+
+/* FRO TAB */
+.fro-controls{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin-bottom:14px;}
+.fro-search{padding:7px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;color:var(--text);background:var(--surface);width:220px;}
+.fro-sel{padding:7px 12px;border:1px solid var(--border);border-radius:var(--r-sm);font-size:12px;color:var(--text);background:var(--surface);cursor:pointer;}
+.fro-search:focus,.fro-sel:focus{outline:none;border-color:var(--accent);}
+.fro-tbl-wrap{overflow-x:auto;}
+.fro-tbl{width:100%;border-collapse:collapse;font-size:11.5px;min-width:900px;}
+.fro-tbl thead tr.th-group th{background:var(--green);color:#fff;font-size:11px;font-weight:800;text-align:center;padding:7px 10px;border-right:2px solid rgba(255,255,255,.3);}
+.fro-tbl thead tr.th-group th:first-child{background:var(--surface2);color:var(--text2);text-align:left;}
+.fro-tbl thead tr.th-sub th{background:#1A4A7A;color:#CBD8F0;font-size:9px;text-transform:uppercase;letter-spacing:.08em;padding:5px 8px;text-align:center;white-space:nowrap;border-right:1px solid rgba(255,255,255,.15);}
+.fro-tbl thead tr.th-sub th.th-left{background:var(--surface2);color:var(--text2);text-align:left;border-right:2px solid var(--border);}
+.fro-tbl tbody tr{border-bottom:1px solid var(--border);}
+.fro-tbl tbody tr:hover{background:var(--accent-lt);}
+.fro-tbl tbody td{padding:7px 10px;vertical-align:middle;}
+.fro-tbl .n{text-align:right;font-variant-numeric:tabular-nums;}
+.fro-tbl .row-group td{background:var(--green);color:#fff;font-weight:800;font-size:12px;padding:8px 10px;}
+.fro-tbl .row-cat td{background:#EAF3EE;color:var(--green-dk);font-weight:700;font-size:12px;}
+.fro-tbl .row-component td{font-weight:800;font-size:12px;padding:8px 10px;color:#fff;}
+.fro-tbl .row-component[data-comp="Local and National Level Planning"] td{background:#6A3DAA;}
+.fro-tbl .row-component[data-comp="Infrastructure Development"] td{background:#1349A0;}
+.fro-tbl .row-component[data-comp="Enterprise Development"] td{background:#C0392B;}
+.fro-tbl .row-component[data-comp="Project Implementation Support"] td{background:#0277BD;}
+.fro-tbl .row-sub td{color:var(--text2);}
+.fro-tbl .row-detail td{color:var(--text2);font-size:11px;}
+.fro-tbl .row-total td{background:#F8FAF5;font-weight:800;border-top:2px solid var(--green);}
+.fro-tbl td.zero{color:var(--muted);}
+.asa-tag{display:inline-block;font-size:9px;font-weight:800;padding:1px 6px;border-radius:3px;margin-right:3px;}
+.asa-lp{background:var(--blue-bg);color:var(--blue);}
+.asa-gop{background:var(--green-bg);color:var(--green);}
+.fro-chart-grid{display:grid;grid-template-columns:1fr 1fr;gap:13px;margin-bottom:16px;}
+
+.ins-performer{display:flex;align-items:center;gap:10px;padding:9px 0;border-bottom:1px solid var(--border);}
+.ins-performer:last-child{border-bottom:none;}
+.ins-rank{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:800;flex-shrink:0;}
+.ins-perf-info{flex:1;}
+.ins-perf-label{font-size:12px;font-weight:700;color:var(--text);}
+.ins-perf-comp{font-size:10px;color:var(--muted);}
+.ins-perf-right{text-align:right;}
+.ins-perf-rate{font-size:14px;font-weight:900;}
+.ins-perf-bal{font-size:10px;color:var(--muted);}
+.ins-perf-bar{height:4px;background:var(--border);border-radius:2px;margin-top:4px;overflow:hidden;}
+.ins-perf-bar-fill{height:100%;border-radius:2px;}
+.action-item{display:flex;gap:12px;padding:12px 0;border-bottom:1px solid var(--border);}
+.action-item:last-child{border-bottom:none;}
+.action-priority{width:28px;height:28px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:13px;flex-shrink:0;margin-top:1px;}
+.action-body{flex:1;}
+.action-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.action-desc{font-size:12px;color:var(--text2);line-height:1.6;}
+.action-tag{display:inline-block;font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;margin-top:5px;}
+.track-step{display:flex;gap:14px;padding:14px 0;border-bottom:1px solid var(--border);}
+.track-step:last-child{border-bottom:none;}
+.track-icon{width:38px;height:38px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+.track-body{flex:1;}
+.track-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;}
+.track-desc{font-size:12px;color:var(--text2);line-height:1.6;}
+.gd-status{display:inline-flex;align-items:center;gap:7px;font-size:12px;padding:5px 12px;border-radius:var(--r-sm);font-weight:600;}
+.gd-status.connected{background:var(--green-bg);color:var(--green);}
+.gd-status.disconnected{background:var(--surface2);color:var(--muted);}
+.gd-status.loading{background:#FFF8E1;color:#7A5500;}
+.gd-btn{padding:7px 16px;border-radius:var(--r-sm);font-size:12px;font-weight:700;cursor:pointer;border:1px solid;display:inline-flex;align-items:center;gap:6px;}
+.gd-btn.primary{background:var(--accent);color:#fff;border-color:var(--accent);}
+.gd-btn.primary:hover{background:#0D47A1;}
+.gd-btn.secondary{background:var(--accent-lt);color:var(--accent);border-color:var(--accent);}
+.gd-btn.secondary:hover{background:var(--accent);color:#fff;}
+.gd-btn.danger{background:var(--red-bg);color:var(--red);border-color:#f5b8b8;}
+.gd-btn.danger:hover{background:var(--red);color:#fff;}
+.snap-table{width:100%;border-collapse:collapse;font-size:12px;}
+.snap-table th{background:var(--surface2);color:var(--text2);font-weight:700;font-size:10px;text-transform:uppercase;letter-spacing:.05em;padding:8px 10px;border-bottom:2px solid var(--border);text-align:left;}
+.snap-table td{padding:8px 10px;border-bottom:1px solid var(--border);vertical-align:middle;}
+.snap-table .n{text-align:right;font-variant-numeric:tabular-nums;}
+.snap-del{padding:4px 10px;background:var(--red-bg);color:var(--red);border:1px solid #f5b8b8;border-radius:4px;font-size:11px;font-weight:700;cursor:pointer;}
+.snap-del:hover{background:var(--red);color:#fff;}
+.snap-diff-pos{color:var(--green);font-weight:700;}
+.snap-diff-neg{color:var(--red);font-weight:700;}
+.comp-legend{display:flex;flex-wrap:wrap;gap:10px;margin-bottom:12px;}
+.comp-legend-item{display:flex;align-items:center;gap:6px;font-size:11px;color:var(--text2);}
+.comp-legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0;}
+@media(max-width:680px){
+  .g2,.g3,.fro-chart-grid{grid-template-columns:1fr;}
+  .hdr,.dash-body{padding-left:14px;padding-right:14px;}
+  .tab-bar{padding:0 14px;}
+  .upload-screen{padding:24px 14px;}
+  .steps{flex-direction:column;}
+  .kpi-val{font-size:18px;}
+}
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="hdr">
+  <svg class="hdr-seal" viewBox="0 0 100 100">
+    <circle cx="50" cy="50" r="48" fill="#1A6B3A"/>
+    <circle cx="50" cy="50" r="40" fill="none" stroke="rgba(255,255,255,0.3)" stroke-width="1.5"/>
+    <text x="50" y="33" text-anchor="middle" fill="#fff" font-size="7" font-weight="700" font-family="serif">DEPARTMENT OF</text>
+    <text x="50" y="43" text-anchor="middle" fill="#fff" font-size="7" font-weight="700" font-family="serif">AGRICULTURE</text>
+    <ellipse cx="50" cy="56" rx="20" ry="9" fill="rgba(255,255,255,0.15)"/>
+    <text x="50" y="73" text-anchor="middle" fill="#FFD700" font-size="6.5" font-weight="700">RFO-1 · RPCO-1</text>
+  </svg>
+  <div class="hdr-info">
+    <div class="hdr-title">PRDP Financial Obligation Dashboard</div>
+    <div class="hdr-sub">Philippine Rural Development Program · DA-RFO1 · RPCO-1 · CY 2026</div>
+  </div>
+  <div class="hdr-right" id="hdrRight"><b>CY 2026</b>Upload Excel to begin</div>
+</div>
+
+<!-- TAB BAR -->
+<div class="tab-bar">
+  <button class="tab-btn active" onclick="switchTab('summary')" id="tab-summary">📊 Summary <span class="tab-pill" id="pill-summary">Awaiting upload</span></button>
+  <button class="tab-btn" onclick="switchTab('fro')" id="tab-fro">📋 FRO Detail <span class="tab-pill" id="pill-fro">Awaiting upload</span></button>
+  <button class="tab-btn" onclick="switchTab('insights')" id="tab-insights">💡 Insights &amp; Analytics <span class="tab-pill" id="pill-insights">Awaiting upload</span></button>
+</div>
+
+<!-- ════════════════════ TAB 1: SUMMARY ════════════════════ -->
+<div class="tab-panel active" id="panel-summary">
+  <div class="upload-screen" id="sum-upload">
+    <div class="upload-hero">
+      <h2>Upload PRDP Excel Workbook</h2>
+      <p>Upload the Excel file — the dashboard will automatically read the <strong>Summary</strong> sheet for the overview and the <strong>FRO 2026</strong> sheet for line-item detail. Both tabs populate from one file.</p>
+    </div>
+    <div class="upload-zone" id="sum-zone">
+      <input type="file" id="sum-file" accept=".xlsx,.xls">
+      <span class="upload-icon">📂</span>
+      <h3>Drop Excel file here</h3>
+      <p>or click to browse — .xlsx required</p>
+      <div class="upload-hint">Requires sheets named <strong>Summary</strong> and <strong>FRO 2026</strong> in the workbook.</div>
+    </div>
+    <div class="steps">
+      <div class="step"><div class="step-num">1</div><p>Open the PRDP Excel workbook</p></div>
+      <div class="step"><div class="step-num">2</div><p>Upload the .xlsx file here</p></div>
+      <div class="step"><div class="step-num">3</div><p>Both tabs auto-populate</p></div>
+    </div>
+    <div id="sum-err"></div>
+  </div>
+  <div class="loading-screen" id="sum-loading">
+    <div class="spinner"></div>
+    <div class="loading-msg" id="sum-load-msg">Reading Summary sheet…</div>
+    <div class="loading-sub">Parsing allocations, obligations, and ASA tranches</div>
+  </div>
+  <div class="dash-body" id="sum-dash">
+    <div class="dash-toolbar">
+      <button class="reset-btn" onclick="resetAll()">↩ Upload new file</button>
+      <span class="src-badge">📊 Summary sheet</span>
+      <span class="as-of-tag" id="sum-asof">As of <b>—</b></span>
+    </div>
+
+    <div class="sec">Overall financial position</div>
+    <div class="kpi-grid" id="sum-kpis"></div>
+
+    <div class="sec">Obligation by component — Scale-up</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">Utilization rate by component</div>
+        <div class="card-sub">Actual obligation ÷ allocation (all appropriations)</div>
+        <div id="sum-comp-bars"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Earmarked vs actual — Current OPEX</div>
+        <div class="card-sub">Stacked obligation breakdown per component</div>
+        <div class="leg">
+          <div class="leg-i"><span class="leg-d" style="background:#1349A0"></span>Actual</div>
+          <div class="leg-i"><span class="leg-d" style="background:#93B8F5"></span>Earmarked</div>
+          <div class="leg-i"><span class="leg-d" style="background:#E4EBF5"></span>Unobligated</div>
+        </div>
+        <div class="cw" style="height:200px"><canvas id="sum-stacked"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec">Appropriation breakdown</div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Allocation vs actual — by category</div>
+        <div class="card-sub">Current vs Continuing · OPEX vs Sub-project</div>
+        <div class="leg">
+          <div class="leg-i"><span class="leg-d" style="background:#B3D0F5"></span>Allocation</div>
+          <div class="leg-i"><span class="leg-d" style="background:#1349A0"></span>Actual</div>
+        </div>
+        <div class="cw" style="height:210px"><canvas id="sum-grouped"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Actual obligation split</div>
+        <div class="card-sub">Current vs Continuing</div>
+        <div class="cw" style="height:170px"><canvas id="sum-donut"></canvas></div>
+        <div id="sum-donut-leg" style="margin-top:12px"></div>
+      </div>
+    </div>
+
+    <div class="sec">Flags &amp; attention items</div>
+    <div class="card full"><div class="card-title">Insights &amp; flags</div><div class="card-sub">Auto-detected from parsed data</div><div class="alerts" id="sum-alerts"></div></div>
+
+    <div class="sec">ASA tranche detail</div>
+    <div class="card full">
+      <div class="card-title">Per-ASA allocation and obligation</div>
+      <div class="card-sub">All allotment and sub-allotment releases</div>
+      <div class="tbl-wrap"><table class="asa-tbl" id="asa-tbl"><thead><tr><th>ASA No.</th><th>Fund</th><th>Category</th><th class="n">Allocation</th><th class="n">Earmarked</th><th class="n">Actual Oblig.</th><th class="n">Total Oblig.</th><th>Rate</th><th class="n">Balance</th><th>Status</th></tr></thead><tbody id="asa-tbody"></tbody></table></div>
+    </div>
+
+    <div class="sec">Component-level detail</div>
+    <div class="card full">
+      <div class="card-title">Full obligation breakdown — all appropriations</div>
+      <div class="card-sub">OPEX and Sub-project rows per component</div>
+      <div class="tbl-wrap" id="sum-tbl"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════════════════ TAB 2: FRO DETAIL ════════════════════ -->
+<div class="tab-panel" id="panel-fro">
+  <div class="upload-screen" id="fro-upload-msg" style="pointer-events:none;">
+    <div class="upload-hero">
+      <h2>Upload Excel file first</h2>
+      <p>Switch to the <strong>Summary</strong> tab and upload the PRDP Excel workbook. The FRO Detail tab will auto-populate from the same file.</p>
+    </div>
+    <div style="font-size:48px;margin-bottom:16px;">👈</div>
+  </div>
+  <div class="loading-screen" id="fro-loading">
+    <div class="spinner"></div>
+    <div class="loading-msg">Parsing FRO 2026 sheet…</div>
+    <div class="loading-sub">Reading all line items and ASA tranches</div>
+  </div>
+  <div class="dash-body" id="fro-dash">
+    <div class="dash-toolbar">
+      <button class="reset-btn" onclick="resetAll()">↩ Upload new file</button>
+      <span class="src-badge">📋 FRO 2026 sheet</span>
+      <span class="as-of-tag" id="fro-asof">As of <b>—</b></span>
+    </div>
+
+    <div class="sec">FRO summary totals</div>
+    <div class="kpi-grid" id="fro-kpis"></div>
+
+    <div class="sec">Obligation charts</div>
+    <div class="fro-chart-grid">
+      <div class="card">
+        <div class="card-title">Top line items by actual obligation</div>
+        <div class="card-sub">OPEX items with account codes (Summary column)</div>
+        <div class="cw" style="height:230px"><canvas id="fro-topbar"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">OPEX allocation vs actual by ASA tranche</div>
+        <div class="card-sub">Incremental Operating Cost row per ASA</div>
+        <div class="leg">
+          <div class="leg-i"><span class="leg-d" style="background:#B3D0F5"></span>Allocation</div>
+          <div class="leg-i"><span class="leg-d" style="background:#1349A0"></span>Actual</div>
+        </div>
+        <div class="cw" style="height:230px"><canvas id="fro-asabar"></canvas></div>
+      </div>
+    </div>
+
+    <div class="sec">Line-item detail — FRO 2026</div>
+    <div class="card full">
+      <div class="card-title">Full breakdown by component and ASA tranche</div>
+      <div class="card-sub">Switch column view per ASA · Search and filter below</div>
+      <div class="fro-controls">
+        <input type="text" class="fro-search" id="fro-search" placeholder="🔍 Search line items…" oninput="renderFROTable()">
+        <select class="fro-sel" id="fro-filter-asa" onchange="renderFROTable()">
+          <option value="summary">SUMMARY (all)</option>
+        </select>
+        <select class="fro-sel" id="fro-filter-sec" onchange="renderFROTable()">
+          <option value="">All sections</option>
+          <option value="sub-project">Sub-Project only</option>
+          <option value="incremental">OPEX only</option>
+        </select>
+        <select class="fro-sel" id="fro-filter-comp" onchange="renderFROTable()">
+          <option value="">All components</option>
+          <option value="Local and National Level Planning">Local &amp; National Level Planning</option>
+          <option value="Infrastructure Development">Infrastructure Development</option>
+          <option value="Enterprise Development">Enterprise Development</option>
+          <option value="Project Implementation Support">Project Implementation Support</option>
+        </select>
+      </div>
+      <div class="fro-tbl-wrap">
+        <table class="fro-tbl">
+          <thead id="fro-thead"></thead>
+          <tbody id="fro-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="sec">Balance (Alloc less Total Oblig) — by component</div>
+  <div class="card full" style="margin-bottom:0;padding:14px 20px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
+      <span style="font-size:12px;font-weight:700;color:var(--text2);">Filter charts:</span>
+      <select class="fro-sel" id="bal-filter-comp" onchange="renderBalCharts()">
+        <option value="">All components</option>
+        <option value="Local and National Level Planning">Local &amp; National Level Planning</option>
+        <option value="Infrastructure Development">Infrastructure Development</option>
+        <option value="Enterprise Development">Enterprise Development</option>
+        <option value="Project Implementation Support">Project Implementation Support</option>
+      </select>
+      <span style="font-size:11px;color:var(--muted);">· Shows only line items with account codes · Sorted largest to smallest balance</span>
+    </div>
+  </div>
+  <div class="fro-chart-grid" id="bal-charts-grid">
+    <div class="card full" id="bal-overview-card">
+      <div class="card-title">Balance (Alloc less Total Oblig) — all components ranked</div>
+      <div class="card-sub">Line items sorted largest to smallest unobligated balance · colored by component</div>
+      <div class="cw" style="height:300px"><canvas id="bal-overview-chart"></canvas></div>
+    </div>
+  </div>
+  <div class="fro-chart-grid" id="bal-comp-charts" style="grid-template-columns:1fr 1fr;"></div>
+
+</div>
+
+<!-- ════════════════════ TAB 3: INSIGHTS ════════════════════ -->
+<div class="tab-panel" id="panel-insights">
+  <div class="upload-screen" id="ins-upload-msg" style="pointer-events:none;">
+    <div class="upload-hero">
+      <h2>Upload Excel file first</h2>
+      <p>Switch to the <strong>Summary</strong> tab and upload the PRDP Excel workbook. Insights will auto-generate from the same file.</p>
+    </div>
+    <div style="font-size:48px;margin-bottom:16px;">👈</div>
+  </div>
+  <div class="dash-body" id="ins-dash">
+    <div class="dash-toolbar">
+      <button class="reset-btn" onclick="resetAll()">↩ Upload new file</button>
+      <span class="src-badge">💡 AI-generated insights</span>
+      <span class="as-of-tag" id="ins-asof">As of <b>—</b></span>
+    </div>
+
+    <!-- SCORECARD -->
+    <div class="sec">Performance scorecard</div>
+    <div id="ins-scorecard" class="kpi-grid"></div>
+
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="sec">Executive summary</div>
+    <div class="g2">
+      <div class="card" id="ins-summary-card">
+        <div class="card-title">Overall financial health</div>
+        <div class="card-sub">Auto-generated narrative from parsed data</div>
+        <div id="ins-narrative" style="font-size:13px;line-height:1.8;color:var(--text2);"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Utilization gauge — overall</div>
+        <div class="card-sub">Current vs target utilization rate</div>
+        <div class="cw" style="height:200px"><canvas id="ins-gauge"></canvas></div>
+        <div id="ins-gauge-label" style="text-align:center;margin-top:8px;font-size:13px;font-weight:700;"></div>
+      </div>
+    </div>
+
+    <!-- TOP/BOTTOM PERFORMERS -->
+    <div class="sec">Component performance ranking</div>
+    <div class="g2">
+      <div class="card">
+        <div class="card-title">🏆 Top performers</div>
+        <div class="card-sub">Highest utilization rate — account-coded line items</div>
+        <div id="ins-top-performers"></div>
+      </div>
+      <div class="card">
+        <div class="card-title">⚠️ Needs attention</div>
+        <div class="card-sub">Lowest utilization · largest unobligated balance</div>
+        <div id="ins-bottom-performers"></div>
+      </div>
+    </div>
+
+    <!-- UTILIZATION RADAR + BALANCE WATERFALL -->
+    <div class="sec">Component utilization vs target</div>
+    <div class="g3">
+      <div class="card">
+        <div class="card-title">Utilization rate vs 80% target — all components</div>
+        <div class="card-sub">Green bar = above target · Red = below target</div>
+        <div class="cw" style="height:260px"><canvas id="ins-target-bar"></canvas></div>
+      </div>
+      <div class="card">
+        <div class="card-title">Balance distribution</div>
+        <div class="card-sub">Unobligated balance per component (Alloc less Total Oblig)</div>
+        <div class="cw" style="height:260px"><canvas id="ins-balance-donut"></canvas></div>
+        <div id="ins-balance-donut-leg" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <!-- ACTION FLAGS -->
+    <div class="sec">Action items &amp; recommendations</div>
+    <div class="card full">
+      <div class="card-title">Recommended actions — based on current data</div>
+      <div class="card-sub">Priority-ranked action items for RPCO-1 action officers</div>
+      <div id="ins-actions"></div>
+    </div>
+
+    <!-- HISTORICAL TRACKING GUIDE -->
+    <div class="sec">Progress tracking strategy</div>
+    <div class="card full" id="ins-tracking-guide">
+      <div class="card-title">📅 How to track progress over time</div>
+      <div class="card-sub">Recommended workflow for weekly / monthly / quarterly monitoring</div>
+      <div id="ins-tracking-content"></div>
+    </div>
+
+    <!-- SNAPSHOT TRACKER (Apps Script) -->
+    <div class="sec">Snapshot history — Google Drive sync</div>
+    <div class="card full">
+      <div class="card-title">📸 Saved snapshots — synced to Google Drive</div>
+      <div class="card-sub">Access your snapshots from any device — saved to <strong>PRDP_Snapshots</strong> spreadsheet in your Google Drive via Apps Script</div>
+
+      <!-- APPS SCRIPT URL SETUP -->
+      <div id="gas-setup-panel" style="padding:14px 16px;background:var(--accent-lt);border-radius:var(--r-sm);margin-bottom:16px;border:1px solid var(--accent);">
+        <div style="font-size:13px;font-weight:700;color:var(--accent);margin-bottom:6px;">🔗 Google Drive connection</div>
+        <div style="font-size:12px;color:var(--text2);margin-bottom:10px;line-height:1.7;">A default Apps Script is pre-configured for PRDP RPCO-1. Works out of the box — no setup needed. You can override it with your own script if needed.
+          <a href="javascript:void(0)" onclick="var g=document.getElementById('gas-guide');g.style.display=g.style.display==='none'?'':'none';" style="color:var(--accent);font-weight:600;margin-left:6px;">How to create your own ↓</a>
+        </div>
+        <!-- DEFAULT URL BADGE -->
+        <div style="display:flex;align-items:center;gap:10px;padding:9px 14px;background:var(--green-bg);border:1px solid #A8D8A8;border-radius:var(--r-sm);margin-bottom:12px;flex-wrap:wrap;">
+          <span style="font-size:12px;font-weight:700;color:var(--green);">🟢 Default script (PRDP RPCO-1)</span>
+          <code style="font-size:10px;color:var(--green-dk);flex:1;word-break:break-all;">…AKfycbwqFUxNpiAOR_v3t_GBtjAq3khSbOc48b29qW9r9g9VN2EhpDJ6M39iRttoIW43ybFR-w…</code>
+          <button class="gd-btn secondary" style="font-size:11px;padding:4px 12px;flex-shrink:0;" onclick="useDefaultUrl()">↩ Use default</button>
+        </div>
+        <!-- CUSTOM URL OVERRIDE -->
+        <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:7px;">🔧 Override with a custom script URL (optional):</div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+          <input type="text" id="gas-url-input" placeholder="Paste custom Apps Script URL here (leave blank to use default)" class="fro-search" style="width:420px;font-size:11px;">
+          <button class="gd-btn primary" onclick="saveGasUrl()">✅ Save &amp; connect</button>
+          <button class="gd-btn secondary" onclick="testGasConnection()">🔄 Test</button>
+          <button class="gd-btn danger" onclick="clearGasUrl()">✕ Clear custom</button>
+        </div>
+        <div id="gas-conn-status" style="margin-top:8px;font-size:12px;"></div>
+      </div>
+
+      <!-- STATUS BAR -->
+      <div style="display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--surface2);border-radius:var(--r-sm);margin-bottom:14px;flex-wrap:wrap;">
+        <div id="gd-status-badge" class="gd-status disconnected">⚪ Not connected to Drive</div>
+        <span style="font-size:11px;color:var(--muted);margin-left:auto;">File: <strong>PRDP_Snapshots</strong> spreadsheet in your Drive</span>
+      </div>
+
+      <!-- SAVE / LOAD CONTROLS -->
+      <div style="display:flex;align-items:center;gap:10px;margin-bottom:16px;flex-wrap:wrap;">
+        <input type="text" id="snap-label" placeholder="e.g. Week 26 · June 26, 2026" class="fro-search" style="width:280px;">
+        <button class="gd-btn primary" onclick="saveSnapshot()">💾 Save to Drive</button>
+        <button class="gd-btn secondary" onclick="loadSnapshotsFromDrive()">🔄 Refresh from Drive</button>
+        <button class="gd-btn danger" onclick="clearSnapshots()">🗑 Clear all</button>
+      </div>
+
+      <div id="snap-drive-msg" style="font-size:12px;color:var(--muted);margin-bottom:10px;display:none;"></div>
+      <div id="snap-table-wrap"></div>
+
+      <!-- SETUP GUIDE (collapsible) -->
+      <div id="gas-guide" style="display:none;margin-top:20px;padding:16px;background:var(--surface2);border-radius:var(--r-sm);border:1px solid var(--border);">
+        <div style="font-size:13px;font-weight:800;color:var(--text);margin-bottom:12px;">📋 How to set up Google Drive sync (5 minutes, free)</div>
+        <div id="gas-steps-content"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div style="background:var(--green);color:rgba(255,255,255,.65);font-size:10px;text-align:center;padding:7px;">
+  <strong style="color:#fff">DA-RFO1 · GSS / RPCO-1</strong> · PRDP CY 2026 Financial Obligation Monitoring · Internal use only
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════════════
+// HELPERS
+// ══════════════════════════════════════════════════════════════
+const COMPS = ['I-PLAN','I-BUILD','I-REAP','I-SUPPORT'];
+const CC = {'I-PLAN':'#7B3DCC','I-BUILD':'#1349A0','I-REAP':'#C0392B','I-SUPPORT':'#0277BD'};
+let charts = {};
+let FRO_DATA = null;
+
+function fm(n){
+  if(n===null||n===undefined||isNaN(n)||n==='')return'—';
+  const a=Math.abs(n);
+  if(a>=1e9)return'₱'+(n/1e9).toFixed(3)+'B';
+  if(a>=1e6)return'₱'+(n/1e6).toFixed(2)+'M';
+  if(a>=1e3)return'₱'+(n/1e3).toFixed(1)+'K';
+  return'₱'+n.toFixed(2);
+}
+function ff(n){
+  if(n===null||n===undefined||isNaN(n)||n===0)return'—';
+  return'₱'+n.toLocaleString('en-PH',{minimumFractionDigits:2,maximumFractionDigits:2});
+}
+function pp(r){return(r===null||r===undefined||isNaN(r))?'—':(r*100).toFixed(2)+'%';}
+function pn(r){return(r===null||isNaN(r))?0:Math.min(100,Math.round(r*100));}
+function rc(r){if(r===null||isNaN(r))return'#9AB';if(r>=.8)return'#1A6B3A';if(r>=.5)return'#7A4800';return'#8B1A1A';}
+function bdg(r){if(r===null||isNaN(r))return['bdg-b','N/A'];if(r>=1)return['bdg-b','Fully obligated'];if(r>=.8)return['bdg-g','On track'];if(r>=.5)return['bdg-a','Partial'];if(r>0)return['bdg-a','Low'];return['bdg-r','Not started'];}
+function dc(id){if(charts[id]){charts[id].destroy();delete charts[id];}}
+function gn(v){if(v===null||v===undefined)return 0;if(typeof v==='number')return isNaN(v)?0:v;const s=String(v).replace(/[₱,]/g,'').trim();const n=parseFloat(s);return isNaN(n)?0:n;}
+
+function switchTab(t){
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('panel-'+t).classList.add('active');
+  document.getElementById('tab-'+t).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════════════════
+// RESET
+// ══════════════════════════════════════════════════════════════
+function resetAll(){
+  ['sum-stacked','sum-grouped','sum-donut','fro-topbar','fro-asabar'].forEach(dc);
+  ['sum-dash','fro-dash','ins-dash'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+  ['sum-loading','fro-loading'].forEach(id=>document.getElementById(id).classList.remove('visible'));
+  document.getElementById('sum-upload').classList.remove('hidden');
+  document.getElementById('fro-upload-msg').classList.remove('hidden');
+  document.getElementById('sum-file').value='';
+  document.getElementById('hdrRight').innerHTML='<b>CY 2026</b>Upload Excel to begin';
+  document.getElementById('pill-summary').textContent='Awaiting upload';
+  document.getElementById('pill-fro').textContent='Awaiting upload';
+  document.getElementById('pill-insights').textContent='Awaiting upload';
+  document.getElementById('ins-upload-msg').classList.remove('hidden');
+  FRO_DATA=null;
+}
+
+// ══════════════════════════════════════════════════════════════
+// FILE UPLOAD HANDLER
+// ══════════════════════════════════════════════════════════════
+function processFile(file){
+  if(!file.name.match(/\.(xlsx|xls)$/i)){showErr('Please upload an Excel (.xlsx) file.');return;}
+  document.getElementById('sum-upload').classList.add('hidden');
+  document.getElementById('fro-upload-msg').classList.add('hidden');
+  document.getElementById('sum-loading').classList.add('visible');
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try{
+      const wb=XLSX.read(e.target.result,{type:'array',cellDates:true,raw:true});
+      // find sheets
+      const sumName=wb.SheetNames.find(n=>n.toLowerCase()==='summary');
+      const froName=wb.SheetNames.find(n=>n.toLowerCase().includes('fro 2026')||n.toLowerCase()==='fro2026');
+      if(!sumName)throw new Error('Sheet "Summary" not found. Check the workbook.');
+      if(!froName)throw new Error('Sheet "FRO 2026" not found. Check the workbook.');
+      document.getElementById('sum-load-msg').textContent='Parsing Summary sheet…';
+      const sumRows=XLSX.utils.sheet_to_json(wb.Sheets[sumName],{header:1,defval:null,raw:true});
+      document.getElementById('sum-load-msg').textContent='Parsing FRO 2026 sheet…';
+      const froRows=XLSX.utils.sheet_to_json(wb.Sheets[froName],{header:1,defval:null,raw:true});
+      setTimeout(()=>{
+        const sumData=parseSummary(sumRows);
+        renderSummary(sumData);
+        const froData=parseFRO(froRows, sumData.asOf);
+        renderFRO(froData);
+        document.getElementById('sum-loading').classList.remove('visible');
+        document.getElementById('sum-dash').classList.add('visible');
+        document.getElementById('fro-dash').classList.add('visible');
+        document.getElementById('pill-summary').textContent='Summary sheet';
+        document.getElementById('pill-fro').textContent='FRO 2026 sheet';
+        document.getElementById('hdrRight').innerHTML=`As of<b>${sumData.asOf}</b>`;
+      },200);
+    }catch(err){showErr(err.message||'Could not parse file.');}
+  };
+  reader.readAsArrayBuffer(file);
+}
+
+function showErr(msg){
+  document.getElementById('sum-loading').classList.remove('visible');
+  document.getElementById('sum-upload').classList.remove('hidden');
+  document.getElementById('fro-upload-msg').classList.remove('hidden');
+  document.getElementById('sum-err').innerHTML=`<div class="err-box"><h4>⚠️ Upload error</h4><p>${msg}</p><button class="retry-btn" onclick="document.getElementById('sum-err').innerHTML=''">Try again</button></div>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PARSE SUMMARY SHEET
+// ══════════════════════════════════════════════════════════════
+function parseSummary(rows){
+  // col map: row[0]=label, row[1]=component (sometimes), row[2]=alloc, row[3]=earmarked, row[4]=actual, row[5]=total, row[6]=rate, row[7]=balActual, row[8]=balTotal
+  let asOf='N/A';
+  // Find date in row 4 (index 3)
+  const r3=rows[3]||[];
+  for(let v of r3){if(v instanceof Date){asOf=v.toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});break;}if(typeof v==='number'&&v>40000&&v<60000){try{const d=XLSX.SSF.parse_date_code(v);if(d&&d.y>2000)asOf=new Date(d.y,d.m-1,d.d).toLocaleDateString('en-PH',{year:'numeric',month:'long',day:'numeric'});}catch(e){}}}
+
+  const D={asOf, scaleup:{total:null,opex:{},subproject:{}}, current:{total:null,opex:{},subproject:{}}, continuing:{total:null,opex:{},subproject:{}}, asaList:[]};
+
+  function mkRow(r,startCol=2){
+    const alloc=gn(r[startCol]), ear=gn(r[startCol+1]), act=gn(r[startCol+2]);
+    const tot=gn(r[startCol+3]);
+    let rate=r[startCol+4];
+    if(typeof rate==='string'&&rate.includes('DIV'))rate=null;
+    else rate=gn(rate);
+    return{alloc,earmarked:ear,actual:act,total:tot,rate,balActual:gn(r[startCol+5]),balTotal:gn(r[startCol+6])};
+  }
+
+  let mode=''; // 'current' or 'continuing'
+  let subMode=''; // 'opex' or 'subproject'
+  const ASA_RE=/ASA\s*No\.\s*([\d\-]+)[^(]*\((LP|GOP)/i;
+
+  for(let ri=0;ri<rows.length;ri++){
+    const r=rows[ri]; if(!r)continue;
+    const c0=r[0]?String(r[0]).trim():'';
+    const c1=r[1]?String(r[1]).trim():'';
+
+    // Scale-up total (row 9 in 1-based = index 8)
+    if(c0==='SCALE-UP'&&c1==='TOTAL') { D.scaleup.total=mkRow(r); continue; }
+    // Scale-up component rows (c0 is I-PLAN etc, c1 is alloc col — they have no c0 label for the approp type)
+    if(!c0&&COMPS.includes(c1)){D.scaleup.opex[c1]=mkRow(r,2);}// actually these are at col1 with alloc at col2
+
+    if(c0==='CURRENT') { D.current.total=mkRow(r,2); mode='current'; subMode=''; continue; }
+    if(c0==='CONTINUING') { D.current.total=D.current.total; D.continuing.total=mkRow(r,2); mode='continuing'; subMode=''; continue; }
+
+    if(c0==='OPEX') { subMode='opex'; if(COMPS.includes(c1)){D[mode].opex[c1]=mkRow(r,2);} continue; }
+    if(c0==='SUB-PROJECT') { subMode='subproject'; if(COMPS.includes(c1)){D[mode].subproject[c1]=mkRow(r,2);} continue; }
+
+    // component rows under OPEX/SUB-PROJECT (c0=null, c1=component)
+    if(!c0&&COMPS.includes(c1)&&mode){
+      D[mode][subMode][c1]=mkRow(r,2); continue;
+    }
+
+    // Scale-up component top-level (rows 10-13, index 9-12): c0=I-PLAN etc, alloc at r[1]
+    if(COMPS.includes(c0)&&typeof r[1]==='number'&&!mode){
+      D.scaleup.opex[c0]={alloc:gn(r[1]),earmarked:gn(r[2]),actual:gn(r[3]),total:gn(r[4]),rate:gn(r[5]),balActual:gn(r[6]),balTotal:gn(r[7])};
+      continue;
+    }
+
+    // ASA entries
+    const m=c0.match(ASA_RE);
+    if(m){
+      const no=m[1].trim(), ftype=m[2].toUpperCase();
+      const isCont=no.startsWith('2025-');
+      const entry={no,ftype,isCont,label:c0,...mkRow(r,2),components:{}};
+      D.asaList.push(entry);
+      continue;
+    }
+
+    // ASA component rows (label = 'For the project implementation', c1=I-PLAN etc)
+    if(c0.toLowerCase().includes('for the project')&&COMPS.includes(c1)&&D.asaList.length>0){
+      D.asaList[D.asaList.length-1].components[c1]={alloc:gn(r[2]),earmarked:gn(r[3]),actual:gn(r[4]),total:gn(r[5]),rate:gn(r[6]),balActual:gn(r[7])};
+      continue;
+    }
+    // Also handle c0=I-PLAN etc below an ASA (no "For the project" header)
+    if(COMPS.includes(c0)&&D.asaList.length>0&&mode&&!subMode){
+      // under ASA header, c0=component, alloc at r[1]
+      const last=D.asaList[D.asaList.length-1];
+      last.components[c0]={alloc:gn(r[1]),earmarked:gn(r[2]),actual:gn(r[3]),total:gn(r[4]),rate:gn(r[5]),balActual:gn(r[6])};
+      continue;
+    }
+  }
+
+  // Fallback: derive current/continuing OPEX from scale-up if empty
+  if(Object.keys(D.current.opex).length===0)D.current.opex=D.scaleup.opex;
+
+  return D;
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER SUMMARY DASHBOARD
+// ══════════════════════════════════════════════════════════════
+let SUMMARY_DATA_GLOBAL = null;
+function renderSummary(D){ SUMMARY_DATA_GLOBAL = D;
+  document.getElementById('sum-asof').innerHTML=`As of <b>${D.asOf}</b>`;
+  document.getElementById('fro-asof').innerHTML=`As of <b>${D.asOf}</b>`;
+
+  const cT=D.current.total||{alloc:0,actual:0,earmarked:0,balActual:0,rate:0};
+  const ctT=D.continuing.total||{alloc:0,actual:0,earmarked:0,balActual:0,rate:0};
+  const tAlloc=cT.alloc+ctT.alloc, tActual=cT.actual+ctT.actual;
+  const tEar=cT.earmarked+ctT.earmarked, tBal=cT.balActual+ctT.balActual;
+  const ovR=tAlloc>0?tActual/tAlloc:0;
+
+  const kpis=[
+    {lbl:'Total allocation',val:fm(tAlloc),sub:'Current + Continuing',rate:null,cls:''},
+    {lbl:'Actual obligations',val:fm(tActual),sub:'Total disbursed CY2026',rate:null,cls:''},
+    {lbl:'Overall utilization',val:pp(ovR),sub:'Actual ÷ Allocation',rate:ovR,cls:ovR>=.8?'g':ovR>=.5?'a':'r'},
+    {lbl:'Current approp.',val:pp(cT.rate),sub:fm(cT.alloc)+' allocated',rate:cT.rate,cls:(cT.rate||0)>=.8?'g':'a'},
+    {lbl:'Continuing approp.',val:pp(ctT.rate),sub:fm(ctT.alloc)+' allocated',rate:ctT.rate,cls:(ctT.rate||0)>=.5?'a':'r'},
+    {lbl:'Unobligated balance',val:fm(tBal),sub:'Remaining vs actual',rate:null,cls:tBal/tAlloc>.2?'a':''},
+    {lbl:'Earmarked (pending)',val:fm(tEar),sub:'Obligated, not yet paid',rate:null,cls:''},
+  ];
+  const kg=document.getElementById('sum-kpis');kg.innerHTML='';
+  kpis.forEach(k=>{const d=document.createElement('div');d.className='kpi';d.innerHTML=`<div class="kpi-lbl">${k.lbl}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div>`+(k.rate!=null?`<div class="kpi-bar"><div class="kpi-fill" style="width:${pn(k.rate)}%;background:${rc(k.rate)};"></div></div>`:'');kg.appendChild(d);});
+
+  // Comp bars
+  function mkBars(secs){
+    let h='';
+    secs.forEach(s=>{
+      const data=s.data;if(!data||!Object.keys(data).length)return;
+      const hasData=COMPS.some(c=>data[c]&&data[c].alloc>0);if(!hasData)return;
+      h+=`<div class="comp-sec-lbl">${s.lbl}</div>`;
+      COMPS.forEach(c=>{const v=data[c];if(!v||v.alloc===0)return;h+=`<div class="comp-row"><div class="comp-name">${c}</div><div class="comp-track"><div class="comp-fill" style="width:${pn(v.rate)}%;background:${CC[c]};"></div></div><div class="comp-pct" style="color:${rc(v.rate)};">${pp(v.rate)}</div><div class="comp-amt">${fm(v.alloc)}</div></div>`;});
+    });
+    return h;
+  }
+  document.getElementById('sum-comp-bars').innerHTML=mkBars([
+    {lbl:'Current — OPEX',data:D.current.opex},
+    {lbl:'Current — Sub-Project',data:D.current.subproject},
+    {lbl:'Continuing — OPEX',data:D.continuing.opex},
+    {lbl:'Continuing — Sub-Project',data:D.continuing.subproject},
+  ]);
+
+  // Stacked bar - current OPEX
+  const cO=D.current.opex||{};const sL=COMPS.filter(c=>cO[c]&&cO[c].alloc>0);
+  dc('sum-stacked');
+  charts['sum-stacked']=new Chart(document.getElementById('sum-stacked'),{type:'bar',data:{labels:sL,datasets:[{label:'Actual',data:sL.map(c=>cO[c].actual||0),backgroundColor:'#1349A0',borderRadius:3},{label:'Earmarked',data:sL.map(c=>cO[c].earmarked||0),backgroundColor:'#93B8F5',borderRadius:3},{label:'Unobligated',data:sL.map(c=>Math.max(0,(cO[c].alloc||0)-(cO[c].total||0))),backgroundColor:'#E4EBF5',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{stacked:true,grid:{display:false},ticks:{font:{size:11}}},y:{stacked:true,ticks:{callback:v=>v>=1e6?'₱'+(v/1e6).toFixed(1)+'M':'₱'+v,font:{size:10}},grid:{color:'#EEE'}}}}});
+
+  // Grouped bar
+  function sA(obj){return COMPS.reduce((s,c)=>s+(obj?.[c]?.alloc||0),0);}
+  function sC(obj){return COMPS.reduce((s,c)=>s+(obj?.[c]?.actual||0),0);}
+  dc('sum-grouped');
+  charts['sum-grouped']=new Chart(document.getElementById('sum-grouped'),{type:'bar',data:{labels:['Curr OPEX','Curr Sub-proj','Cont OPEX','Cont Sub-proj'],datasets:[{label:'Alloc',data:[sA(D.current.opex),sA(D.current.subproject),sA(D.continuing.opex),sA(D.continuing.subproject)],backgroundColor:'#B3D0F5',borderColor:'#1349A0',borderWidth:1.5,borderRadius:4},{label:'Actual',data:[sC(D.current.opex),sC(D.current.subproject),sC(D.continuing.opex),sC(D.continuing.subproject)],backgroundColor:'#1349A0',borderRadius:4}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{ticks:{callback:v=>'₱'+(v/1e6).toFixed(0)+'M',font:{size:10}},grid:{color:'#EEE'}}}}});
+
+  // Donut
+  dc('sum-donut');
+  charts['sum-donut']=new Chart(document.getElementById('sum-donut'),{type:'doughnut',data:{labels:['Current','Continuing'],datasets:[{data:[cT.actual,ctT.actual],backgroundColor:['#1349A0','#2ECC71'],borderWidth:0,hoverOffset:6}]},options:{responsive:true,maintainAspectRatio:false,cutout:'68%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.label+': '+fm(ctx.parsed)}}}}});
+  document.getElementById('sum-donut-leg').innerHTML=`<div class="leg"><div class="leg-i"><span class="leg-d" style="background:#1349A0"></span>Current ${fm(cT.actual)}</div><div class="leg-i"><span class="leg-d" style="background:#2ECC71"></span>Continuing ${fm(ctT.actual)}</div></div>`;
+
+  // Alerts
+  const al=[];
+  function chk(lbl,data){if(!data)return;COMPS.forEach(c=>{const v=data[c];if(!v||v.alloc===0)return;const r=v.rate||0;if(r===0)al.push({t:'red',i:'🔴',m:`<b>${lbl} — ${c}</b>: 0% utilization — ${fm(v.alloc)} fully unobligated.`});else if(r<0.25)al.push({t:'red',i:'🔴',m:`<b>${lbl} — ${c}</b>: Only ${pp(r)} utilized — ${fm(v.balActual)} remaining.`});else if(r<0.50)al.push({t:'amber',i:'🟡',m:`<b>${lbl} — ${c}</b>: ${pp(r)} — below 50% threshold.`});else if(r>=0.95)al.push({t:'green',i:'🟢',m:`<b>${lbl} — ${c}</b>: ${pp(r)} — near fully obligated.`});});}
+  chk('Current OPEX',D.current.opex);chk('Current Sub-project',D.current.subproject);chk('Continuing OPEX',D.continuing.opex);chk('Continuing Sub-project',D.continuing.subproject);
+  D.asaList.forEach(a=>{if(a.rate===0&&a.alloc>0)al.push({t:'red',i:'🔴',m:`<b>ASA ${a.no} (${a.ftype})</b>: 0% utilization — ${fm(a.alloc)} unobligated.`});});
+  if(!al.length)al.push({t:'green',i:'✅',m:'No major flags detected. All components appear on track.'});
+  document.getElementById('sum-alerts').innerHTML=al.map(a=>`<div class="alert-row ${a.t}"><span class="alert-icon">${a.i}</span><span>${a.m}</span></div>`).join('');
+
+  // ASA table
+  let asaHtml='';
+  D.asaList.forEach(a=>{
+    const[bc,bl]=bdg(a.rate);const rn=pn(a.rate);const rv=rc(a.rate);
+    const noShort=a.no.replace('2026-000','26-').replace('2025-000','25-');
+    asaHtml+=`<tr>
+      <td><span class="asa-no">${noShort}</span></td>
+      <td><span class="fund-tag ${a.ftype.toLowerCase()}">${a.ftype}</span></td>
+      <td style="font-size:11px;color:var(--muted)">${a.isCont?'Continuing':'Current'}</td>
+      <td class="n">${ff(a.alloc)}</td>
+      <td class="n" style="color:var(--accent)">${a.earmarked>0?ff(a.earmarked):'—'}</td>
+      <td class="n" style="font-weight:700">${ff(a.actual)}</td>
+      <td class="n">${ff(a.total)}</td>
+      <td><div class="rate-w"><div class="rate-trk"><div class="rate-f" style="width:${rn}%;background:${rv}"></div></div><span style="font-size:11px;font-weight:800;color:${rv}">${pp(a.rate)}</span></div></td>
+      <td class="n" style="color:var(--amber)">${ff(a.balActual)}</td>
+      <td><span class="bdg ${bc}">${bl}</span></td>
+    </tr>`;
+  });
+  document.getElementById('asa-tbody').innerHTML=asaHtml||'<tr><td colspan="10" style="color:var(--muted);padding:16px">No ASA entries found.</td></tr>';
+
+  // Detail table
+  function tR(gl,oD,sD){
+    let h=`<tr class="gh"><td colspan="9">${gl}</td></tr>`;
+    const mk=(cl,data)=>{if(!data)return;h+=`<tr class="sh"><td colspan="2">${cl}</td><td class="n">Allocation</td><td class="n">Earmarked</td><td class="n">Actual</td><td class="n">Total</td><td>Rate</td><td class="n">Balance</td><td>Status</td></tr>`;COMPS.forEach(c=>{const d=data[c];if(!d||d.alloc===0&&d.actual===0){h+=`<tr><td style="padding-left:20px;font-size:11px;color:var(--muted)">${cl}</td><td style="font-weight:700">${c}</td><td colspan="7" style="color:var(--muted)">—</td></tr>`;return;}const[bc,bl]=bdg(d.rate);const rn=pn(d.rate);const rv=rc(d.rate);h+=`<tr><td style="padding-left:20px;font-size:11px;color:var(--muted)">${cl}</td><td style="font-weight:800">${c}</td><td class="n">${ff(d.alloc)}</td><td class="n" style="color:var(--accent)">${d.earmarked>0?ff(d.earmarked):'—'}</td><td class="n" style="font-weight:800">${ff(d.actual)}</td><td class="n">${ff(d.total)}</td><td><div class="rate-w"><div class="rate-trk"><div class="rate-f" style="width:${rn}%;background:${rv}"></div></div><span style="font-size:11px;font-weight:800;color:${rv}">${pp(d.rate)}</span></div></td><td class="n" style="color:var(--amber)">${d.balActual>0?ff(d.balActual):'—'}</td><td><span class="bdg ${bc}">${bl}</span></td></tr>`;});};
+    mk('OPEX',oD);mk('SUB-PROJECT',sD);return h;
+  }
+  document.getElementById('sum-tbl').innerHTML=`<table class="tbl"><thead><tr><th>Category</th><th>Component</th><th class="n">Allocation</th><th class="n">Earmarked</th><th class="n">Actual</th><th class="n">Total</th><th>Utilization</th><th class="n">Balance</th><th>Status</th></tr></thead><tbody>${tR('CURRENT APPROPRIATION',D.current.opex,D.current.subproject)}${tR('CONTINUING APPROPRIATION',D.continuing.opex,D.continuing.subproject)}</tbody></table>`;
+}
+
+// ══════════════════════════════════════════════════════════════
+// PARSE FRO SHEET
+// ══════════════════════════════════════════════════════════════
+const FRO_SECTIONS=[
+  {id:'summary',label:'SUMMARY',start:2},
+  {id:'current',label:'CURRENT APPROP.',start:8},
+  {id:'asa015',label:'ASA 2026-000015 (LP)',start:14},
+  {id:'asa016',label:'ASA 2026-000016 (GOP)',start:20},
+  {id:'continuing',label:'CONTINUING APPROP.',start:26},
+  {id:'asa018',label:'ASA 2025-000018 (LP)',start:32},
+  {id:'asa019',label:'ASA 2025-000019 (GOP)',start:38},
+  {id:'asa097',label:'ASA 2026-000097 (LP)',start:44},
+  {id:'asa098',label:'ASA 2026-000098 (GOP)',start:50},
+];
+
+function parseFRO(rows, asOf){
+  const items=[];
+  for(let ri=11;ri<rows.length;ri++){
+    const r=rows[ri];const label=r[0]?String(r[0]).trim():'';
+    if(!label)continue;
+    if(label.toLowerCase().startsWith('summary')&&ri>100)break;
+    if(label.toLowerCase().startsWith('fro vs'))break;
+    const COMP_LABELS=['Local and National Level Planning','Infrastructure Development','Enterprise Development','Project Implementation Support'];
+    let type='item';
+    if(label===label.toUpperCase()&&!label.startsWith('>'))type='group';
+    else if(COMP_LABELS.includes(label))type='component';
+    else if(!label.startsWith('>')&&!r[1])type='cat';
+    else if(label.startsWith('>'))type='detail';
+    else type='sub';
+    const accCode=r[1]?String(r[1]).trim():'';
+    const sections={};
+    FRO_SECTIONS.forEach(s=>{
+      const alloc=gn(r[s.start]),ear=gn(r[s.start+1]),act=gn(r[s.start+2]),tot=gn(r[s.start+3]);
+      sections[s.id]={alloc,earmarked:ear,actual:act,total:tot,balActual:gn(r[s.start+4]),balTotal:gn(r[s.start+5]),rate:alloc>0?act/alloc:null};
+    });
+    items.push({label,accCode,type,sections,ri});
+  }
+  return{asOf,items};
+}
+
+// ══════════════════════════════════════════════════════════════
+// RENDER FRO DASHBOARD
+// ══════════════════════════════════════════════════════════════
+function renderFRO(D){
+  FRO_DATA=D;
+  const totalRow=D.items.find(i=>i.label==='TOTAL');
+  const sum=totalRow?totalRow.sections.summary:{alloc:0,actual:0,earmarked:0,balActual:0};
+
+  const kpis=[
+    {lbl:'Total allocation',val:fm(sum.alloc),sub:'All components — FRO',rate:null,cls:''},
+    {lbl:'Actual obligations',val:fm(sum.actual),sub:'Total disbursed',rate:null,cls:''},
+    {lbl:'Utilization rate',val:sum.alloc>0?pp(sum.actual/sum.alloc):'—',sub:'Actual ÷ Allocation',rate:sum.alloc>0?sum.actual/sum.alloc:null,cls:sum.alloc>0&&sum.actual/sum.alloc>=.8?'g':sum.alloc>0&&sum.actual/sum.alloc>=.5?'a':'r'},
+    {lbl:'Unobligated balance',val:fm(sum.balActual),sub:'Remaining vs actual',rate:null,cls:''},
+    {lbl:'Earmarked (pending)',val:fm(sum.earmarked),sub:'Obligated, not yet paid',rate:null,cls:''},
+    {lbl:'Line items tracked',val:String(D.items.filter(i=>i.accCode).length),sub:'With account codes',rate:null,cls:''},
+  ];
+  const kg=document.getElementById('fro-kpis');kg.innerHTML='';
+  kpis.forEach(k=>{const d=document.createElement('div');d.className='kpi';d.innerHTML=`<div class="kpi-lbl">${k.lbl}</div><div class="kpi-val ${k.cls}">${k.val}</div><div class="kpi-sub">${k.sub}</div>`+(k.rate!=null?`<div class="kpi-bar"><div class="kpi-fill" style="width:${pn(k.rate)}%;background:${rc(k.rate)};"></div></div>`:'');kg.appendChild(d);});
+
+  // Top bar chart
+  const acItems=D.items.filter(i=>i.accCode&&i.sections.summary.actual>0).sort((a,b)=>b.sections.summary.actual-a.sections.summary.actual).slice(0,10);
+  dc('fro-topbar');
+  charts['fro-topbar']=new Chart(document.getElementById('fro-topbar'),{type:'bar',data:{labels:acItems.map(i=>i.label.replace(/^> /,'')),datasets:[{label:'Alloc',data:acItems.map(i=>i.sections.summary.alloc),backgroundColor:'#B3D0F5',borderColor:'#1349A0',borderWidth:1.5,borderRadius:3},{label:'Actual',data:acItems.map(i=>i.sections.summary.actual),backgroundColor:'#1349A0',borderRadius:3}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>'₱'+(v/1e6).toFixed(1)+'M',font:{size:9}},grid:{color:'#EEE'}},y:{ticks:{font:{size:9}},grid:{display:false}}}}});
+
+  // ASA bar chart
+  const asaSecs=FRO_SECTIONS.filter(s=>s.id.startsWith('asa'));
+  const incRow=D.items.find(i=>i.label==='INCREMENTAL OPERATING COST');
+  dc('fro-asabar');
+  if(incRow){charts['fro-asabar']=new Chart(document.getElementById('fro-asabar'),{type:'bar',data:{labels:asaSecs.map(s=>s.label.replace('ASA ','')),datasets:[{label:'Alloc',data:asaSecs.map(s=>incRow.sections[s.id]?.alloc||0),backgroundColor:'#B3D0F5',borderColor:'#1349A0',borderWidth:1.5,borderRadius:3},{label:'Actual',data:asaSecs.map(s=>incRow.sections[s.id]?.actual||0),backgroundColor:'#1349A0',borderRadius:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{font:{size:9},maxRotation:40},grid:{display:false}},y:{ticks:{callback:v=>'₱'+(v/1e6).toFixed(1)+'M',font:{size:9}},grid:{color:'#EEE'}}}}});}
+
+  // Populate ASA filter
+  const sel=document.getElementById('fro-filter-asa');
+  sel.innerHTML='<option value="summary">SUMMARY (all)</option>';
+  FRO_SECTIONS.filter(s=>s.id!=='summary').forEach(s=>{const o=document.createElement('option');o.value=s.id;o.textContent=s.label;sel.appendChild(o);});
+
+  renderFROTable();
+  renderBalCharts();
+  renderInsights(SUMMARY_DATA_GLOBAL, D);
+}
+
+function renderFROTable(){
+  renderBalCharts();
+  if(!FRO_DATA)return;
+  const secId=document.getElementById('fro-filter-asa').value||'summary';
+  const search=(document.getElementById('fro-search').value||'').toLowerCase();
+  const filterSec=(document.getElementById('fro-filter-sec').value||'').toLowerCase();
+  const filterComp=document.getElementById('fro-filter-comp').value||'';
+  const sec=FRO_SECTIONS.find(s=>s.id===secId)||FRO_SECTIONS[0];
+  const isLP=sec.label.includes('LP');const isGOP=sec.label.includes('GOP');
+  const tag=isLP?'<span class="asa-tag asa-lp">LP</span>':isGOP?'<span class="asa-tag asa-gop">GOP</span>':'';
+
+  document.getElementById('fro-thead').innerHTML=`<tr class="th-group"><th colspan="2" style="text-align:left">Component / Sub-Component</th><th colspan="7">${tag}${sec.label}</th></tr><tr class="th-sub"><th class="th-left">Description</th><th class="th-left">Account Code</th><th class="n">Allocation</th><th class="n">Earmarked</th><th class="n">Actual</th><th class="n">Total Oblig.</th><th class="n">Bal (Actual)</th><th class="n">Bal (Total)</th><th>Rate</th></tr>`;
+
+  let html='';
+  // Track section (SUB-PROJECT / INCREMENTAL OPERATING COST)
+  let inSec=!filterSec;
+  // Track active component block
+  const COMP_NAMES=['Local and National Level Planning','Infrastructure Development','Enterprise Development','Project Implementation Support'];
+  let activeComp='';
+  let inComp=!filterComp;
+  FRO_DATA.items.forEach(item=>{
+    const lbl=item.label.toLowerCase();
+    // Section filter: GROUP rows (SUB-PROJECT, INCREMENTAL OPERATING COST) set the section
+    if(item.type==='group'){
+      if(filterSec){inSec=lbl.includes(filterSec);}
+      // GROUP row also resets component tracking
+      if(filterComp){activeComp='';inComp=false;}
+    }
+    if(filterSec&&!inSec)return;
+    // Component filter: COMPONENT rows start a new block; any GROUP or another COMPONENT ends the previous
+    if(filterComp){
+      if(item.type==='component'){
+        activeComp=item.label;
+        inComp=(activeComp===filterComp);
+      }
+      if(!inComp)return;
+    }
+    if(search&&!item.label.toLowerCase().includes(search))return;
+    const s=item.sections[secId]||{alloc:0,earmarked:0,actual:0,total:0,balActual:0,rate:null};
+    const allZero=!s.alloc&&!s.actual&&!s.earmarked;
+    const rv=rc(s.rate);const rn=pn(s.rate);
+    const rowCls=item.label==='TOTAL'?'row-total':item.type==='group'?'row-group':item.type==='component'?'row-component':item.type==='cat'?'row-cat':item.type==='detail'?'row-detail':'row-sub';
+    const dataComp=item.type==='component'?` data-comp="${item.label}"`:'';
+    const indent=item.type==='detail'?'padding-left:28px':item.type==='sub'?'padding-left:14px':'';
+    html+=`<tr class="${rowCls}"${dataComp}><td style="${indent}">${item.label.replace(/^> /,'')}</td><td style="font-size:10px;color:var(--muted)">${item.accCode}</td><td class="n ${allZero?'zero':''}">${allZero||!s.alloc?'—':ff(s.alloc)}</td><td class="n" style="color:${s.earmarked>0?'var(--accent)':'var(--muted)'}">${s.earmarked>0?ff(s.earmarked):'—'}</td><td class="n" style="font-weight:${s.actual>0?700:400}">${s.actual>0?ff(s.actual):'—'}</td><td class="n">${s.total>0?ff(s.total):'—'}</td><td class="n" style="color:var(--amber)">${s.balActual>0?ff(s.balActual):'—'}</td><td class="n" style="color:var(--red)">${s.balTotal>0?ff(s.balTotal):'—'}</td><td>${s.rate!==null&&s.alloc>0?`<div class="rate-w"><div class="rate-trk"><div class="rate-f" style="width:${rn}%;background:${rv}"></div></div><span style="font-size:10px;font-weight:800;color:${rv}">${pp(s.rate)}</span></div>`:'—'}</td></tr>`;
+  });
+  document.getElementById('fro-tbody').innerHTML=html||'<tr><td colspan="9" style="text-align:center;padding:20px;color:var(--muted)">No matching rows.</td></tr>';
+}
+
+// ══════════════════════════════════════════════════════════════
+// BALANCE CHARTS
+// ══════════════════════════════════════════════════════════════
+const COMP_COLORS = {
+  'Local and National Level Planning': '#6A3DAA',
+  'Infrastructure Development':        '#1349A0',
+  'Enterprise Development':            '#C0392B',
+  'Project Implementation Support':    '#0277BD',
+};
+const COMP_LIGHT = {
+  'Local and National Level Planning': '#EDE7F6',
+  'Infrastructure Development':        '#E0EBFF',
+  'Enterprise Development':            '#FCEAEA',
+  'Project Implementation Support':    '#E1F5FE',
+};
+const COMP_NAMES_LIST = ['Local and National Level Planning','Infrastructure Development','Enterprise Development','Project Implementation Support'];
+
+function renderBalCharts(){
+  if(!FRO_DATA) return;
+
+  // destroy existing per-comp charts
+  ['bal-overview-chart','bal-lnlp-chart','bal-infra-chart','bal-ed-chart','bal-pis-chart'].forEach(dc);
+  COMP_NAMES_LIST.forEach(c=>{ const id='bal-chart-'+c.replace(/\s+/g,'-'); dc(id); });
+
+  const secId     = document.getElementById('fro-filter-asa').value || 'summary';
+  const filterComp= document.getElementById('bal-filter-comp').value || '';
+
+  // Collect only rows WITH account codes
+  let currentComp = '';
+  const allItems = [];
+  FRO_DATA.items.forEach(item => {
+    if(item.type === 'group')     { currentComp = ''; return; }
+    if(item.type === 'component') { currentComp = item.label; return; }
+    if(!item.accCode)             return; // ← only with account code
+    const s   = item.sections[secId] || {};
+    const bal = s.balTotal || 0;
+    if(bal > 0 && currentComp && item.label !== 'TOTAL') {
+      allItems.push({
+        label:    item.label.replace(/^> /, ''),
+        balTotal: bal,
+        actual:   s.actual  || 0,
+        alloc:    s.alloc   || 0,
+        comp:     currentComp,
+        accCode:  item.accCode,
+      });
+    }
+  });
+
+  // Apply component filter
+  const visItems = filterComp ? allItems.filter(i => i.comp === filterComp) : allItems;
+
+  // Show/hide chart section
+  const gridEl  = document.getElementById('bal-charts-grid');
+  const compEl  = document.getElementById('bal-comp-charts');
+  if(!visItems.length){
+    gridEl.style.display = 'none';
+    compEl.style.display = 'none';
+    return;
+  }
+  gridEl.style.display = '';
+  compEl.style.display = '';
+
+  // ── OVERVIEW: sorted desc, color-coded ──
+  const sorted   = [...visItems].sort((a,b) => b.balTotal - a.balTotal);
+  const ovColors = sorted.map(i => (COMP_COLORS[i.comp]||'#888') + 'CC');
+  const ovBorder = sorted.map(i =>  COMP_COLORS[i.comp]||'#888');
+  const maxH     = Math.max(260, sorted.length * 22 + 60);
+  document.getElementById('bal-overview-chart').parentElement.style.height = maxH + 'px';
+
+  charts['bal-overview-chart'] = new Chart(document.getElementById('bal-overview-chart'), {
+    type: 'bar',
+    data: {
+      labels: sorted.map(i => i.label.length > 38 ? i.label.slice(0,38)+'…' : i.label),
+      datasets: [{
+        label: 'Balance (Alloc less Total Oblig)',
+        data:  sorted.map(i => i.balTotal),
+        backgroundColor: ovColors,
+        borderColor:     ovBorder,
+        borderWidth: 1.5,
+        borderRadius: 4,
+      }]
+    },
+    options: {
+      indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+      plugins: {
+        legend: { display: false },
+        tooltip: { callbacks: { label: ctx => {
+          const it = sorted[ctx.dataIndex];
+          return [
+            `Balance: ₱${ctx.parsed.x.toLocaleString('en-PH',{minimumFractionDigits:2})}`,
+            `Component: ${it.comp}`,
+            `Alloc: ${fm(it.alloc)}`,
+            `Actual: ${fm(it.actual)}`,
+            `Acc. Code: ${it.accCode}`,
+          ];
+        }}}
+      },
+      scales: {
+        x: { ticks:{ callback: v=>'₱'+(v/1e6).toFixed(1)+'M', font:{size:10} }, grid:{color:'#EEE'} },
+        y: { ticks:{ font:{size:10} }, grid:{display:false} }
+      }
+    }
+  });
+
+  // Legend
+  const overviewCard = document.getElementById('bal-overview-card');
+  let legEl = document.getElementById('bal-overview-legend');
+  if(!legEl){ legEl=document.createElement('div'); legEl.id='bal-overview-legend'; legEl.className='comp-legend'; legEl.style.marginTop='12px'; overviewCard.appendChild(legEl); }
+  const visComps = [...new Set(visItems.map(i=>i.comp))];
+  legEl.innerHTML = visComps.map(c=>`<div class="comp-legend-item"><span class="comp-legend-dot" style="background:${COMP_COLORS[c]}"></span>${c}</div>`).join('');
+
+  // ── PER-COMPONENT CHARTS ──
+  const compChartEl = document.getElementById('bal-comp-charts');
+  compChartEl.innerHTML = '';
+
+  const renderComps = filterComp ? [filterComp] : COMP_NAMES_LIST;
+
+  renderComps.forEach(comp => {
+    const compItems = allItems.filter(i=>i.comp===comp).sort((a,b)=>b.balTotal-a.balTotal);
+    if(!compItems.length) return;
+
+    const color   = COMP_COLORS[comp];
+    const cardDiv = document.createElement('div');
+    cardDiv.className = 'card';
+    const h = Math.max(180, compItems.length * 26 + 60);
+    cardDiv.innerHTML = `
+      <div class="card-title" style="color:${color};display:flex;align-items:center;gap:8px;">
+        <span style="display:inline-block;width:4px;height:16px;background:${color};border-radius:2px;flex-shrink:0;"></span>
+        ${comp}
+      </div>
+      <div class="card-sub">Balance (Alloc less Total Oblig) · account-coded items · sorted largest to smallest</div>
+      <div class="leg">
+        <div class="leg-i"><span class="leg-d" style="background:${color}CC"></span>Unobligated balance</div>
+        <div class="leg-i"><span class="leg-d" style="background:${color}44;border:1px solid ${color}"></span>Actual obligated</div>
+      </div>
+      <div class="cw" style="height:${h}px"><canvas id="bal-chart-${comp.replace(/[\s&]+/g,'-')}"></canvas></div>`;
+    compChartEl.appendChild(cardDiv);
+
+    const chartId = 'bal-chart-'+comp.replace(/[\s&]+/g,'-');
+    setTimeout(()=>{
+      const ctx = document.getElementById(chartId);
+      if(!ctx) return;
+      charts[chartId] = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: compItems.map(i=>i.label.length>40?i.label.slice(0,40)+'…':i.label),
+          datasets: [
+            { label:'Balance (Alloc less Total)', data:compItems.map(i=>i.balTotal), backgroundColor:color+'CC', borderColor:color, borderWidth:1.5, borderRadius:4 },
+            { label:'Actual obligation',          data:compItems.map(i=>i.actual),   backgroundColor:color+'44', borderColor:color, borderWidth:1,   borderRadius:4 },
+          ]
+        },
+        options: {
+          indexAxis:'y', responsive:true, maintainAspectRatio:false,
+          plugins: {
+            legend:{ display:false },
+            tooltip:{ callbacks:{ label: ctx2 => {
+              const val = ctx2.parsed.x;
+              return `${ctx2.dataset.label}: ₱${val.toLocaleString('en-PH',{minimumFractionDigits:2})}`;
+            }}}
+          },
+          scales: {
+            x:{ ticks:{ callback:v=>'₱'+(Math.abs(v)/1e6).toFixed(2)+'M', font:{size:9} }, grid:{color:'#EEE'} },
+            y:{ ticks:{ font:{size:9} }, grid:{display:false} }
+          }
+        }
+      });
+    }, 50);
+  });
+}
+
+// ══════════════════════════════════════════════════════════════
+// INSIGHTS TAB
+// ══════════════════════════════════════════════════════════════
+let INSIGHTS_SUM = null;
+let INSIGHTS_FRO = null;
+
+function renderInsights(sumData, froData){
+  INSIGHTS_SUM = sumData;
+  INSIGHTS_FRO = froData;
+  ['ins-gauge','ins-target-bar','ins-balance-donut'].forEach(dc);
+
+  const asOf = sumData.asOf;
+  document.getElementById('ins-asof').innerHTML = `As of <b>${asOf}</b>`;
+  document.getElementById('pill-insights').textContent = 'Live';
+  document.getElementById('ins-upload-msg').classList.add('hidden');
+  document.getElementById('ins-dash').classList.add('visible');
+
+  const cT  = sumData.current.total    || {alloc:0,actual:0,earmarked:0,balActual:0,rate:0};
+  const ctT = sumData.continuing.total || {alloc:0,actual:0,earmarked:0,balActual:0,rate:0};
+  const tAlloc  = cT.alloc  + ctT.alloc;
+  const tActual = cT.actual + ctT.actual;
+  const tEar    = cT.earmarked + ctT.earmarked;
+  const tBal    = (cT.balActual||0) + (ctT.balActual||0);
+  const ovRate  = tAlloc > 0 ? tActual / tAlloc : 0;
+
+  // ── SCORECARD ──
+  function healthColor(r){ return r>=.8?'var(--green)':r>=.5?'var(--amber)':'var(--red)'; }
+  function healthLabel(r){ return r>=.8?'On Track':r>=.5?'At Risk':'Critical'; }
+  function healthEmoji(r){ return r>=.8?'🟢':r>=.5?'🟡':'🔴'; }
+
+  const scorecards = [
+    { lbl:'Overall utilization',   val: pp(ovRate),             sub: healthLabel(ovRate),        rate: ovRate,         emoji: healthEmoji(ovRate) },
+    { lbl:'Current appropriation', val: pp(cT.rate||0),         sub: healthLabel(cT.rate||0),    rate: cT.rate||0,     emoji: healthEmoji(cT.rate||0) },
+    { lbl:'Continuing approp.',    val: pp(ctT.rate||0),        sub: healthLabel(ctT.rate||0),   rate: ctT.rate||0,    emoji: healthEmoji(ctT.rate||0) },
+    { lbl:'Unobligated balance',   val: fm(tBal),               sub: pp(tBal/tAlloc) + ' of total alloc', rate: null, emoji: tBal/tAlloc>.3?'🔴':tBal/tAlloc>.15?'🟡':'🟢' },
+    { lbl:'Earmarked pending',     val: fm(tEar),               sub: 'Awaiting liquidation',    rate: null,           emoji: '📌' },
+    { lbl:'Total obligation',      val: fm(tActual+tEar),       sub: fm(tAlloc) + ' allocated', rate: null,           emoji: '📊' },
+  ];
+  const sg = document.getElementById('ins-scorecard'); sg.innerHTML='';
+  scorecards.forEach(k=>{
+    const d=document.createElement('div'); d.className='kpi';
+    d.innerHTML=`<div class="kpi-lbl">${k.emoji} ${k.lbl}</div><div class="kpi-val" style="color:${k.rate!=null?healthColor(k.rate):'var(--text)'}">${k.val}</div><div class="kpi-sub">${k.sub}</div>`+(k.rate!=null?`<div class="kpi-bar"><div class="kpi-fill" style="width:${pn(k.rate)}%;background:${healthColor(k.rate)};"></div></div>`:'');
+    sg.appendChild(d);
+  });
+
+  // ── NARRATIVE ──
+  const flags = [];
+  const praises = [];
+  function checkComp(label, data){
+    if(!data) return;
+    COMPS.forEach(c=>{
+      const v=data[c]; if(!v||v.alloc===0) return;
+      const r=v.rate||0;
+      if(r===0) flags.push(`<b>${label} — ${c}</b> has 0% utilization with ${fm(v.alloc)} fully unobligated`);
+      else if(r<0.25) flags.push(`<b>${label} — ${c}</b> is critically low at ${pp(r)} (${fm(v.balActual)} remaining)`);
+      else if(r<0.50) flags.push(`<b>${label} — ${c}</b> is below the 50% threshold at ${pp(r)}`);
+      if(r>=0.95) praises.push(`<b>${label} — ${c}</b> is near-fully obligated at ${pp(r)}`);
+    });
+  }
+  checkComp('Current OPEX', sumData.current.opex);
+  checkComp('Current Sub-project', sumData.current.subproject);
+  checkComp('Continuing OPEX', sumData.continuing.opex);
+  checkComp('Continuing Sub-project', sumData.continuing.subproject);
+
+  const rating = ovRate>=.8?'satisfactory':ovRate>=.6?'moderate':ovRate>=.4?'below target':'critical';
+  let narrative = `<p style="margin-bottom:10px">As of <strong>${asOf}</strong>, PRDP RPCO-1 has a <strong style="color:${healthColor(ovRate)}">${(ovRate*100).toFixed(1)}% overall utilization rate</strong> — rated <strong>${rating}</strong> against the 80% target. Total actual obligations stand at <strong>${fm(tActual)}</strong> out of <strong>${fm(tAlloc)}</strong> allocated.</p>`;
+  
+  if(flags.length){
+    narrative += `<p style="margin-bottom:8px;color:var(--red);font-weight:600;">⚠️ ${flags.length} concern${flags.length>1?'s':''} identified:</p><ul style="margin:0 0 10px 18px;color:var(--text2);">`;
+    flags.forEach(f => narrative += `<li style="margin-bottom:4px">${f}</li>`);
+    narrative += '</ul>';
+  }
+  if(praises.length){
+    narrative += `<p style="margin-bottom:8px;color:var(--green);font-weight:600;">✅ Strong performance:</p><ul style="margin:0 0 10px 18px;color:var(--text2);">`;
+    praises.forEach(f => narrative += `<li style="margin-bottom:4px">${f}</li>`);
+    narrative += '</ul>';
+  }
+  if(tEar > 0) narrative += `<p style="color:var(--amber);">📌 <strong>${fm(tEar)}</strong> is earmarked but not yet liquidated — monitor closely for timely processing.</p>`;
+  document.getElementById('ins-narrative').innerHTML = narrative;
+
+  // ── GAUGE (doughnut) ──
+  const gaugeRate = Math.min(1, ovRate);
+  charts['ins-gauge'] = new Chart(document.getElementById('ins-gauge'), {
+    type: 'doughnut',
+    data: { datasets: [
+      { data:[gaugeRate, 1-gaugeRate], backgroundColor:[healthColor(ovRate),'#EEE'], borderWidth:0, circumference:270, rotation:225 },
+      { data:[0.8, 0.2], backgroundColor:['transparent','transparent'], borderWidth:0, circumference:270, rotation:225 }
+    ]},
+    options:{ responsive:true, maintainAspectRatio:false, cutout:'75%', plugins:{ legend:{display:false}, tooltip:{enabled:false} } }
+  });
+  document.getElementById('ins-gauge-label').innerHTML = `<span style="font-size:28px;font-weight:900;color:${healthColor(ovRate)}">${(ovRate*100).toFixed(1)}%</span><br><span style="font-size:11px;color:var(--muted)">Target: 80%</span>`;
+
+  // ── PERFORMERS ──
+  const allLineItems = [];
+  let currentComp2 = '';
+  froData.items.forEach(item=>{
+    if(item.type==='group'){currentComp2='';return;}
+    if(item.type==='component'){currentComp2=item.label;return;}
+    if(!item.accCode)return;
+    const s=item.sections['summary']||{};
+    if(s.alloc>0) allLineItems.push({label:item.label.replace(/^> /,''),comp:currentComp2,alloc:s.alloc,actual:s.actual||0,rate:s.alloc>0?(s.actual||0)/s.alloc:null,balTotal:s.balTotal||0,accCode:item.accCode});
+  });
+
+  const sorted_asc  = [...allLineItems].filter(i=>i.rate!==null).sort((a,b)=>b.rate-a.rate);
+  const sorted_desc = [...allLineItems].filter(i=>i.rate!==null&&i.alloc>0).sort((a,b)=>b.balTotal-a.balTotal);
+  const top5    = sorted_asc.slice(0,5);
+  const bottom5 = sorted_desc.slice(0,5);
+
+  function perfHTML(items, isTop){
+    return items.map((it,i)=>{
+      const color = isTop ? healthColor(it.rate) : healthColor(it.rate);
+      const compColor = COMP_COLORS[it.comp]||'#888';
+      return `<div class="ins-performer">
+        <div class="ins-rank" style="background:${compColor}22;color:${compColor}">${i+1}</div>
+        <div class="ins-perf-info">
+          <div class="ins-perf-label">${it.label}</div>
+          <div class="ins-perf-comp" style="color:${compColor}">${it.comp}</div>
+          <div class="ins-perf-bar"><div class="ins-perf-bar-fill" style="width:${pn(it.rate)}%;background:${color}"></div></div>
+        </div>
+        <div class="ins-perf-right">
+          <div class="ins-perf-rate" style="color:${color}">${pp(it.rate)}</div>
+          <div class="ins-perf-bal">${isTop?fm(it.actual)+' obligated':fm(it.balTotal)+' balance'}</div>
+        </div>
+      </div>`;
+    }).join('');
+  }
+  document.getElementById('ins-top-performers').innerHTML    = perfHTML(top5, true)    || '<p style="color:var(--muted);font-size:12px">No data.</p>';
+  document.getElementById('ins-bottom-performers').innerHTML = perfHTML(bottom5, false) || '<p style="color:var(--muted);font-size:12px">No data.</p>';
+
+  // ── TARGET BAR ──
+  const compData4 = COMP_NAMES_LIST.map(c=>{
+    const opex=sumData.current.opex?.[c]||{};
+    const cont=sumData.continuing.opex?.[c]||{};
+    const alloc=(opex.alloc||0)+(cont.alloc||0);
+    const actual=(opex.actual||0)+(cont.actual||0);
+    return{comp:c, rate:alloc>0?actual/alloc:0};
+  });
+  const barColors = compData4.map(d=>d.rate>=0.8?'#1A7A4A99':'#C0392B99');
+  const barBorder = compData4.map(d=>d.rate>=0.8?'#1A7A4A':'#C0392B');
+  charts['ins-target-bar'] = new Chart(document.getElementById('ins-target-bar'),{
+    type:'bar',
+    data:{
+      labels: compData4.map(c=>c.comp.length>20?c.comp.slice(0,20)+'…':c.comp),
+      datasets:[
+        { label:'Utilization rate', data:compData4.map(d=>d.rate*100), backgroundColor:barColors, borderColor:barBorder, borderWidth:1.5, borderRadius:5 },
+        { label:'80% target', data:[80,80,80,80], type:'line', borderColor:'#E53935', borderWidth:2, borderDash:[6,3], pointRadius:0, fill:false }
+      ]
+    },
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>ctx.dataset.label===('80% target')?'Target: 80%':pp(ctx.parsed.y/100)}}},
+      scales:{x:{grid:{display:false},ticks:{font:{size:10}}},y:{min:0,max:100,ticks:{callback:v=>v+'%',font:{size:10}},grid:{color:'#EEE'}}}}
+  });
+
+  // ── BALANCE DONUT ──
+  const balByComp = COMP_NAMES_LIST.map(c=>{
+    let bal=0;
+    froData.items.forEach(it=>{
+      if(it.type==='component'&&it.label===c){return;}
+    });
+    let curComp='';
+    froData.items.forEach(it=>{
+      if(it.type==='component'){curComp=it.label;return;}
+      if(curComp!==c||!it.accCode)return;
+      bal+=(it.sections['summary']?.balTotal||0);
+    });
+    return bal;
+  });
+  const donutColors = COMP_NAMES_LIST.map(c=>COMP_COLORS[c]);
+  charts['ins-balance-donut'] = new Chart(document.getElementById('ins-balance-donut'),{
+    type:'doughnut',
+    data:{labels:COMP_NAMES_LIST, datasets:[{data:balByComp, backgroundColor:donutColors.map(c=>c+'CC'), borderColor:donutColors, borderWidth:2, hoverOffset:8}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'60%',plugins:{legend:{display:false},tooltip:{callbacks:{label:ctx=>`${ctx.label}: ${fm(ctx.parsed)}`}}}}
+  });
+  document.getElementById('ins-balance-donut-leg').innerHTML = `<div class="leg">${COMP_NAMES_LIST.map((c,i)=>`<div class="leg-i"><span class="leg-d" style="background:${donutColors[i]}"></span>${c.split(' ').slice(0,3).join(' ')}… — ${fm(balByComp[i])}</div>`).join('')}</div>`;
+
+  // ── ACTION ITEMS ──
+  const actions = [];
+  // Auto-generate from data
+  const zeroComps = [];
+  const lowComps  = [];
+  COMPS.forEach(c=>{
+    const r = (sumData.current.opex?.[c]?.rate||0);
+    const bal = sumData.current.opex?.[c]?.balActual||0;
+    if(r===0 && bal>0) zeroComps.push({c,bal});
+    else if(r<0.5&&bal>0) lowComps.push({c,r,bal});
+  });
+  if(zeroComps.length) actions.push({priority:'🔴',color:'var(--red-bg)',tag:'URGENT',tagColor:'var(--red)',title:`Obligate zero-utilization components immediately`,desc:`${zeroComps.map(x=>`<strong>${x.c}</strong> (${fm(x.bal)})`).join(', ')} have no actual obligations. Coordinate with implementing units for immediate processing. Risk of lapsed appropriation if not acted upon before year-end.`});
+  if(lowComps.length) actions.push({priority:'🟠',color:'var(--amber-bg)',tag:'HIGH PRIORITY',tagColor:'var(--amber)',title:`Accelerate obligation processing for low-utilization components`,desc:`${lowComps.map(x=>`<strong>${x.c}</strong> at ${pp(x.r)}`).join(', ')}. Review procurement plans, check pending transactions, and coordinate with budget officers to process pending obligations.`});
+  if(tEar>0) actions.push({priority:'🟡',color:'var(--amber-bg)',tag:'MONITOR',tagColor:'var(--amber)',title:`Process ${fm(tEar)} in earmarked obligations`,desc:`Earmarked amounts are committed but not yet liquidated. Expedite liquidation of advances, process delivery receipts, and clear pending DVs to convert earmarked to actual obligations.`});
+  actions.push({priority:'🔵',color:'var(--blue-bg)',tag:'WEEKLY',tagColor:'var(--blue)',title:`Conduct weekly obligation monitoring meetings`,desc:`Hold a 30-minute standing meeting every Monday with budget, accounting, and implementing unit representatives to review pending transactions and set week-level targets.`});
+  actions.push({priority:'🔵',color:'var(--blue-bg)',tag:'MONTHLY',tagColor:'var(--blue)',title:`Update this dashboard at least once a week`,desc:`Upload a fresh screenshot or Excel export every Monday morning. Use the Snapshot feature below to save each version — this builds your historical record automatically.`});
+  actions.push({priority:'🟢',color:'var(--green-bg)',tag:'BEST PRACTICE',tagColor:'var(--green)',title:`Set per-component monthly obligation targets`,desc:`Divide remaining balance by weeks remaining in the CY. Set monthly milestones for each component and compare against snapshots. Flag deviations early rather than catching them at year-end.`});
+  if(ovRate>=0.8) actions.push({priority:'🟢',color:'var(--green-bg)',tag:'SUSTAIN',tagColor:'var(--green)',title:`Sustain current momentum — overall at ${pp(ovRate)}`,desc:`Performance is above target. Focus on maintaining documentation quality, ensuring all obligations have complete supporting documents, and preparing for year-end closing requirements.`});
+
+  document.getElementById('ins-actions').innerHTML = actions.map(a=>`<div class="action-item"><div class="action-priority" style="background:${a.color};font-size:16px;">${a.priority}</div><div class="action-body"><div class="action-title">${a.title}</div><div class="action-desc">${a.desc}</div><span class="action-tag" style="background:${a.color};color:${a.tagColor}">${a.tag}</span></div></div>`).join('');
+
+  // ── TRACKING GUIDE ──
+  const steps = [
+    {icon:'📸',bg:'#E8F5EE',title:'Step 1 — Save a snapshot every Monday morning',desc:'Upload the latest Excel file, then use the <strong>Snapshot</strong> section below to save it with a label like <em>"Week 26 · June 26, 2026"</em>. Each snapshot stores total allocation, actual obligations, utilization rate, and balance. Over time, this browser-stored history becomes your progress ledger.'},
+    {icon:'📊',bg:'#E0EBFF',title:'Step 2 — Compare snapshots week over week',desc:'The snapshot table shows the <strong>change in utilization rate</strong> from the previous snapshot. A positive delta (e.g. +3.2%) means progress was made; zero or negative means obligations stalled — your signal to escalate.'},
+    {icon:'🎯',bg:'#FEF1D8',title:'Step 3 — Set monthly targets per component',desc:'Compute: <code style="background:var(--surface2);padding:2px 6px;border-radius:4px">Monthly target = Remaining balance ÷ Months remaining</code>. Post this on your monitoring sheet. At the end of each month, compare actual progress vs target using your snapshot history.'},
+    {icon:'📅',bg:'#EDE7F6',title:'Step 4 — Quarterly review with management',desc:'Every quarter, export the snapshot table and prepare a 1-page summary: utilization rate trend, top/bottom performers, and a forward projection. Present this during management meetings as your PRDP financial monitoring report.'},
+    {icon:'💡',bg:'#F3E5F5',title:'Bonus — Request historical data from accounting',desc:'Ask the accounting unit to provide monthly Obligation Registers (ObR) or Statement of Allotment, Obligations and Balances (SAOB) exports. Uploading these as separate files will give you a true month-by-month series, enabling trend analysis and obligation velocity tracking.'},
+  ];
+  document.getElementById('ins-tracking-content').innerHTML = steps.map(s=>`<div class="track-step"><div class="track-icon" style="background:${s.bg}">${s.icon}</div><div class="track-body"><div class="track-title">${s.title}</div><div class="track-desc">${s.desc}</div></div></div>`).join('');
+
+  // ── SNAPSHOT TRACKER ──
+  renderSnapshotTable();
+}
+
+// ══════════════════════════════════════════════════════════════
+// GOOGLE DRIVE SNAPSHOT STORAGE — via Apps Script Web App
+// ══════════════════════════════════════════════════════════════
+const GAS_URL_KEY     = 'prdp_gas_url';
+const GAS_DEFAULT_URL = 'https://script.google.com/macros/s/AKfycbwqFUxNpiAOR_v3t_GBtjAq3khSbOc48b29qW9r9g9VN2EhpDJ6M39iRttoIW43ybFR-w/exec';
+let   snapshots    = [];
+let   gasConnected = false;
+
+// ── GAS URL MANAGEMENT ────────────────────────────────────────
+function getGasUrl(){ return (localStorage.getItem(GAS_URL_KEY)||'').trim() || GAS_DEFAULT_URL; }
+
+function saveGasUrl(){
+  const url = document.getElementById('gas-url-input').value.trim();
+  if(!url){ localStorage.removeItem(GAS_URL_KEY); setConnStatus('↩️ Reverted to default URL. Testing…','info'); testGasConnection(); return; }
+  if(!url.startsWith('https://script.google.com')){ setConnStatus('❌ Must start with https://script.google.com','error'); return; }
+  localStorage.setItem(GAS_URL_KEY, url);
+  setConnStatus('✅ Custom URL saved. Testing…','info');
+  testGasConnection();
+}
+function useDefaultUrl(){
+  localStorage.removeItem(GAS_URL_KEY);
+  const inp = document.getElementById('gas-url-input');
+  if(inp) inp.value = '';
+  setConnStatus('↩️ Using default PRDP script. Testing…','info');
+  testGasConnection();
+}
+
+function clearGasUrl(){
+  localStorage.removeItem(GAS_URL_KEY);
+  const inp = document.getElementById('gas-url-input');
+  if(inp) inp.value = '';
+  setConnStatus('↩️ Custom URL cleared — reverting to default script. Testing…','info');
+  testGasConnection();
+}
+
+async function testGasConnection(){
+  const url = getGasUrl();
+  if(!url){ setConnStatus('⚠️ No URL set yet.','warn'); return; }
+  setConnStatus('⏳ Testing…','info');
+  try{
+    const r = await gasRequest('ping');
+    if(r.ok){ gasConnected=true; updateGdBadge(true); setConnStatus('✅ Connected! Loading snapshots…','success'); await loadSnapshotsFromDrive(); }
+    else { gasConnected=false; updateGdBadge(false); setConnStatus('❌ Server replied but returned an error: '+(r.error||'unknown'),'error'); }
+  } catch(e){ gasConnected=false; updateGdBadge(false); setConnStatus('❌ Could not reach Apps Script: '+e.message,'error'); }
+}
+
+// ── APPS SCRIPT REQUESTS ──────────────────────────────────────
+async function gasRequest(action, payload={}){
+  const url = getGasUrl();
+  if(!url) throw new Error('No Apps Script URL configured.');
+  const body = JSON.stringify({ action, ...payload });
+  // GAS requires POST with CORS handling — use no-cors then verify via GET ping
+  const resp = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'text/plain' }, // text/plain avoids CORS preflight
+    body,
+  });
+  const text = await resp.text();
+  try { return JSON.parse(text); }
+  catch(e) { throw new Error('Invalid response from Apps Script: '+text.slice(0,120)); }
+}
+
+// ── LOAD / SAVE ───────────────────────────────────────────────
+async function loadSnapshotsFromDrive(){
+  const url = getGasUrl();
+  if(!url){ showDriveMsg('Connect to Google Drive first — paste your Apps Script URL above.','warn'); return; }
+  showDriveMsg('⏳ Loading from Google Drive…','info');
+  try{
+    const r = await gasRequest('load');
+    if(r.ok){ snapshots = r.data || []; showDriveMsg(`✅ Loaded ${snapshots.length} snapshot(s) from Drive.`,'success'); renderSnapshotTable(); }
+    else { showDriveMsg('Error: '+(r.error||'unknown'),'error'); }
+  } catch(e){ showDriveMsg('Could not load: '+e.message,'error'); }
+}
+
+async function saveSnapshotsToDrive(){
+  const r = await gasRequest('save', { data: snapshots });
+  if(!r.ok) throw new Error(r.error||'Save failed');
+}
+
+// ── SNAPSHOT CRUD ─────────────────────────────────────────────
+async function saveSnapshot(){
+  if(!INSIGHTS_SUM){ alert('Upload a file first.'); return; }
+  const url = getGasUrl();
+  if(!url){ showDriveMsg('Connect to Google Drive first.','warn'); return; }
+
+  const label   = document.getElementById('snap-label').value.trim() || INSIGHTS_SUM.asOf;
+  const cT      = INSIGHTS_SUM.current.total    || {alloc:0,actual:0,rate:0,balActual:0};
+  const ctT     = INSIGHTS_SUM.continuing.total || {alloc:0,actual:0,rate:0,balActual:0};
+  const tAlloc  = cT.alloc  + ctT.alloc;
+  const tActual = cT.actual + ctT.actual;
+  const tBal    = (cT.balActual||0) + (ctT.balActual||0);
+  const ovRate  = tAlloc > 0 ? tActual / tAlloc : 0;
+
+  const snap = { id:Date.now(), label, savedAt:new Date().toISOString(), asOf:INSIGHTS_SUM.asOf,
+                 tAlloc, tActual, tBal, ovRate, currRate:cT.rate||0, contRate:ctT.rate||0 };
+  snapshots.push(snap);
+  showDriveMsg('⏳ Saving to Google Drive…','info');
+  try{
+    await saveSnapshotsToDrive();
+    document.getElementById('snap-label').value='';
+    showDriveMsg(`✅ Snapshot "${label}" saved to Google Drive!`,'success');
+    renderSnapshotTable();
+  } catch(e){
+    snapshots.pop();
+    showDriveMsg('Error saving: '+e.message,'error');
+  }
+}
+
+async function deleteSnapshot(id){
+  snapshots = snapshots.filter(s=>s.id!==id);
+  showDriveMsg('⏳ Updating Drive…','info');
+  try{ await saveSnapshotsToDrive(); showDriveMsg('Snapshot deleted.','info'); renderSnapshotTable(); }
+  catch(e){ showDriveMsg('Error: '+e.message,'error'); }
+}
+
+async function clearSnapshots(){
+  if(!confirm('Delete ALL snapshots from Google Drive? Cannot be undone.')) return;
+  snapshots=[];
+  showDriveMsg('⏳ Clearing…','info');
+  try{ await saveSnapshotsToDrive(); showDriveMsg('All snapshots cleared.','info'); renderSnapshotTable(); }
+  catch(e){ showDriveMsg('Error: '+e.message,'error'); }
+}
+
+// ── UI HELPERS ────────────────────────────────────────────────
+function updateGdBadge(connected){
+  const b = document.getElementById('gd-status-badge');
+  if(!b) return;
+  if(connected){ b.className='gd-status connected'; b.textContent='🟢 Connected to Google Drive'; }
+  else          { b.className='gd-status disconnected'; b.textContent='⚪ Not connected to Drive'; }
+}
+
+function setConnStatus(msg, type){
+  const el = document.getElementById('gas-conn-status');
+  if(!el) return;
+  const colors = {success:'var(--green)',error:'var(--red)',warn:'var(--amber)',info:'var(--text2)'};
+  el.style.color = colors[type]||colors.info;
+  el.innerHTML = msg;
+}
+
+function showDriveMsg(msg, type='info'){
+  const el = document.getElementById('snap-drive-msg');
+  if(!el) return;
+  el.style.display='';
+  const colors = {success:'var(--green)',error:'var(--red)',warn:'var(--amber)',info:'var(--text2)'};
+  el.style.color = colors[type]||colors.info;
+  el.innerHTML = msg;
+  if(type==='success') setTimeout(()=>{ el.style.display='none'; }, 4000);
+}
+
+// ── SNAPSHOT TABLE ────────────────────────────────────────────
+function renderSnapshotTable(){
+  const wrap = document.getElementById('snap-table-wrap');
+  if(!getGasUrl()){
+    wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:12px 0">Connect your Apps Script URL above to enable Drive sync.</p>';
+    return;
+  }
+  if(!snapshots.length){
+    wrap.innerHTML='<p style="font-size:12px;color:var(--muted);padding:12px 0">No snapshots yet. Upload a file and click <strong>💾 Save to Drive</strong>.</p>';
+    return;
+  }
+  const sorted=[...snapshots].sort((a,b)=>a.id-b.id);
+  let tbl=`<table class="snap-table"><thead><tr>
+    <th>#</th><th>Label</th><th>As of</th>
+    <th class="n">Total Alloc</th><th class="n">Actual Oblig</th><th class="n">Balance</th>
+    <th class="n">Overall Rate</th><th class="n">Δ Rate</th>
+    <th class="n">Curr Rate</th><th class="n">Cont Rate</th>
+    <th>Saved</th><th></th>
+  </tr></thead><tbody>`;
+  sorted.forEach((s,i)=>{
+    const prev=i>0?sorted[i-1]:null;
+    const delta=prev?s.ovRate-prev.ovRate:null;
+    const dHtml=delta===null?'—':`<span class="${delta>=0?'snap-diff-pos':'snap-diff-neg'}">${delta>=0?'+':''}${(delta*100).toFixed(2)}%</span>`;
+    const rColor=s.ovRate>=.8?'var(--green)':s.ovRate>=.5?'var(--amber)':'var(--red)';
+    const sd=new Date(s.savedAt).toLocaleDateString('en-PH',{month:'short',day:'numeric',year:'numeric'});
+    tbl+=`<tr>
+      <td style="color:var(--muted);font-weight:700">${i+1}</td>
+      <td style="font-weight:700">${s.label}</td>
+      <td style="font-size:11px;color:var(--muted)">${s.asOf}</td>
+      <td class="n">${fm(s.tAlloc)}</td>
+      <td class="n" style="font-weight:700">${fm(s.tActual)}</td>
+      <td class="n" style="color:var(--amber)">${fm(s.tBal)}</td>
+      <td class="n" style="font-weight:900;color:${rColor}">${pp(s.ovRate)}</td>
+      <td class="n">${dHtml}</td>
+      <td class="n">${pp(s.currRate)}</td>
+      <td class="n">${pp(s.contRate)}</td>
+      <td style="font-size:10px;color:var(--muted)">${sd}</td>
+      <td><button class="snap-del" onclick="deleteSnapshot(${s.id})">✕</button></td>
+    </tr>`;
+  });
+  tbl+='</tbody></table>';
+  if(snapshots.length>=2){
+    const f=sorted[0],l=sorted[sorted.length-1],d=(l.ovRate-f.ovRate)*100;
+    tbl+=`<div style="margin-top:12px;padding:10px 14px;background:${d>=0?'var(--green-bg)':'var(--red-bg)'};border-radius:var(--r-sm);font-size:12px;color:${d>=0?'var(--green-dk)':'var(--red)'};">
+      📈 Total progress from <strong>${f.label}</strong> to <strong>${l.label}</strong>: <strong>${d>=0?'+':''}${d.toFixed(2)}%</strong> across ${snapshots.length} snapshots.</div>`;
+  }
+  wrap.innerHTML=tbl;
+}
+
+// ── SETUP GUIDE ───────────────────────────────────────────────
+function renderGasGuide(){
+  const el = document.getElementById('gas-steps-content');
+  if(!el) return;
+  const GAS_CODE = `function doPost(e) {
+  var data = JSON.parse(e.postData.contents);
+  var ss = SpreadsheetApp.openById('SPREADSHEET_ID');
+  var sheet = ss.getSheetByName('Snapshots') || ss.insertSheet('Snapshots');
+
+  if (data.action === 'ping') {
+    return output({ok: true, message: 'PRDP Dashboard connected!'});
+  }
+  if (data.action === 'save') {
+    sheet.clearContents();
+    sheet.getRange(1,1).setValue(JSON.stringify(data.data));
+    return output({ok: true});
+  }
+  if (data.action === 'load') {
+    var val = sheet.getRange(1,1).getValue();
+    var parsed = val ? JSON.parse(val) : [];
+    return output({ok: true, data: parsed});
+  }
+  return output({ok: false, error: 'Unknown action'});
+}
+
+function output(obj) {
+  return ContentService
+    .createTextOutput(JSON.stringify(obj))
+    .setMimeType(ContentService.MimeType.JSON);
+}`.replace(/</g,'&lt;').replace(/>/g,'&gt;');
+
+  el.innerHTML = `
+    <div class="track-step"><div class="track-icon" style="background:#E8F5EE">1️⃣</div><div class="track-body">
+      <div class="track-title">Create a Google Spreadsheet in your PRDP Drive folder</div>
+      <div class="track-desc">Go to <a href="https://drive.google.com/drive/folders/1OBMmbbktvsapX72yRtf10ap5jXC-EiRl" target="_blank" style="color:var(--accent)">your PRDP Drive folder</a> → New → Google Sheets. Name it <strong>PRDP_Snapshots</strong>. Copy its <strong>Spreadsheet ID</strong> from the URL (the long string between /d/ and /edit).</div>
+    </div></div>
+    <div class="track-step"><div class="track-icon" style="background:#E0EBFF">2️⃣</div><div class="track-body">
+      <div class="track-title">Open Apps Script</div>
+      <div class="track-desc">In the spreadsheet, go to <strong>Extensions → Apps Script</strong>. Delete the default code and paste the code below. Replace <code style="background:var(--surface2);padding:2px 5px;border-radius:3px">SPREADSHEET_ID</code> with your actual spreadsheet ID.</div>
+    </div></div>
+    <div style="background:#1A2332;border-radius:var(--r-sm);padding:14px;margin:8px 0 16px;overflow-x:auto;">
+      <pre style="color:#A8D8A8;font-size:11px;line-height:1.6;white-space:pre;">${GAS_CODE}</pre>
+    </div>
+    <div class="track-step"><div class="track-icon" style="background:#FEF1D8">3️⃣</div><div class="track-body">
+      <div class="track-title">Deploy as Web App</div>
+      <div class="track-desc">Click <strong>Deploy → New deployment</strong>. Type: <strong>Web app</strong>. Execute as: <strong>Me</strong>. Who has access: <strong>Anyone</strong>. Click Deploy, authorize, then copy the <strong>Web app URL</strong>.</div>
+    </div></div>
+    <div class="track-step"><div class="track-icon" style="background:#EDE7F6">4️⃣</div><div class="track-body">
+      <div class="track-title">Paste the URL above and click Connect</div>
+      <div class="track-desc">Paste the Web App URL into the field at the top of this section and click <strong>✅ Connect</strong>. The dashboard will test the connection and load any existing snapshots. Done — works on any device!</div>
+    </div></div>`;
+}
+
+// ── INIT ──────────────────────────────────────────────────────
+window.addEventListener('load', ()=>{
+  // Pre-fill custom URL if saved (don't show the default — it's shown in the badge)
+  const custom = localStorage.getItem(GAS_URL_KEY)||'';
+  const urlInput = document.getElementById('gas-url-input');
+  if(urlInput && custom) urlInput.value = custom;
+  // Render setup guide
+  renderGasGuide();
+  // Always auto-connect (default URL is always available)
+  gasConnected = true;
+  updateGdBadge(true);
+  loadSnapshotsFromDrive();
+});
+
+// ══════════════════════════════════════════════════════════════
+// EVENTS
+// ══════════════════════════════════════════════════════════════
+document.getElementById('sum-file').addEventListener('change',e=>{if(e.target.files[0])processFile(e.target.files[0]);});
+const sz=document.getElementById('sum-zone');
+sz.addEventListener('dragover',e=>{e.preventDefault();sz.classList.add('drag');});
+sz.addEventListener('dragleave',()=>sz.classList.remove('drag'));
+sz.addEventListener('drop',e=>{e.preventDefault();sz.classList.remove('drag');if(e.dataTransfer.files[0])processFile(e.dataTransfer.files[0]);});
+</script>
+</body>
+</html>
