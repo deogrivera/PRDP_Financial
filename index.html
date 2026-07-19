@@ -3,28 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>PRDP-RPCO I Earmarked & Balances Dashboard</title>
-  <!-- Chart.js -->
+  <title>PRDP-RPCO I · Full Dashboard + 100% Stacked Recon</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <!-- Chart.js Data Labels Plugin -->
   <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0/dist/chartjs-plugin-datalabels.min.js"></script>
-  <!-- SheetJS -->
   <script src="https://cdn.sheetjs.com/xlsx-0.20.2/package/dist/xlsx.full.min.js"></script>
   <style>
-    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, system-ui, sans-serif; }
+    * { box-sizing: border-box; font-family: 'Segoe UI', Roboto, sans-serif; }
     body { background: #f4f7fc; margin: 0; padding: 20px; display: flex; flex-direction: column; align-items: center; }
     .container { max-width: 1480px; width: 100%; background: white; border-radius: 24px; padding: 22px 26px; box-shadow: 0 12px 30px rgba(0,0,0,0.08); }
     h1 { font-weight: 700; font-size: 1.7rem; color: #0b2b4a; margin-top: 0; margin-bottom: 4px; display: flex; align-items: center; gap: 12px; flex-wrap: wrap; }
     h1 small { font-size: 0.9rem; font-weight: 400; color: #3d6a8c; }
     .subhead { color: #2c5778; font-size: 0.9rem; margin-top: -2px; margin-bottom: 18px; border-left: 4px solid #2a7faa; padding-left: 14px; background: #eef4fa; border-radius: 0 12px 12px 0; line-height: 1.4; }
-    
-    .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #dce6f0; padding-bottom: 0; }
+    .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid #dce6f0; flex-wrap: wrap; }
     .tab-btn { padding: 10px 24px; border: none; background: transparent; font-size: 0.95rem; font-weight: 600; color: #4a6f8c; cursor: pointer; border-radius: 12px 12px 0 0; transition: 0.2s; position: relative; bottom: -2px; }
     .tab-btn:hover { background: #e8f0f8; color: #0b2b4a; }
     .tab-btn.active { background: #e2ecf7; color: #0b2b4a; border-bottom: 3px solid #2a7faa; }
     .tab-content { display: none; }
     .tab-content.active { display: block; }
-
     .kpi-section { margin-bottom: 6px; }
     .kpi-section-title { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: #3d6a8c; font-weight: 600; margin-bottom: 4px; border-bottom: 2px solid #dce6f0; padding-bottom: 3px; }
     .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 10px; margin-bottom: 14px; }
@@ -34,25 +29,21 @@
     .kpi-card.danger { background: #ffe8e8; border-color: #d97a7a; }
     .kpi-card.success { background: #e6f5ed; border-color: #4aad8a; }
     .kpi-card.info { background: #e3f0fa; border-color: #5a9fc7; }
+    .kpi-card.focus { background: #fef3e2; border-color: #e67e22; border-width: 2px; }
+    .kpi-card.critical { background: #fde8e8; border-color: #c0392b; border-width: 2px; }
     .kpi-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.03em; color: #2a4d6e; font-weight: 600; }
     .kpi-value { font-size: 1.5rem; font-weight: 700; color: #0b2b4a; line-height: 1.2; margin-top: 1px; }
     .kpi-sub { font-size: 0.65rem; color: #2f5b7a; }
-
     .upload-area { background: #eef3f9; border-radius: 40px; padding: 8px 18px; display: inline-flex; align-items: center; gap: 12px; border: 1px dashed #97b8d4; margin-bottom: 18px; flex-wrap: wrap; }
     .upload-area label { background: #1a4970; color: white; padding: 6px 18px; border-radius: 40px; font-weight: 500; font-size: 0.85rem; cursor: pointer; transition: 0.2s; border: none; }
     .upload-area label:hover { background: #0d3553; }
     #file-input { display: none; }
-
     .charts-row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin: 4px 0 10px; }
-    .charts-row-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 16px; margin: 4px 0 10px; }
     .charts-row-1 { display: grid; grid-template-columns: 1fr; gap: 16px; margin: 4px 0 10px; }
     .chart-box { background: #fafdff; border-radius: 18px; padding: 12px 12px 8px; border: 1px solid #deeaf5; }
     .chart-box h3 { margin: 0 0 4px 0; font-size: 0.85rem; font-weight: 500; color: #1f4b6e; text-align: center; }
-    .chart-box canvas { max-height: 170px; max-width: 100%; height: auto !important; width: 100% !important; }
-    .chart-box.full-width canvas { max-height: 200px; }
-    .chart-box.tall canvas { max-height: 220px; }
-    .chart-box.gauge canvas { max-height: 190px; }
-
+    .chart-box canvas { max-height: 220px; max-width: 100%; height: auto !important; width: 100% !important; }
+    .chart-box.tall canvas { max-height: 260px; }
     .toolbar { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; margin: 6px 0 10px; gap: 10px; }
     .filter-group { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; }
     .filter-group input, .filter-group select { padding: 6px 10px; border-radius: 40px; border: 1px solid #cbdae8; background: white; font-size: 0.8rem; min-width: 110px; }
@@ -68,35 +59,37 @@
     .badge-danger { background: #fdd0d0; color: #a03131; }
     .badge-success { background: #c8e6d0; color: #1a6a3a; }
     .badge-info { background: #c8ddf0; color: #1a4a6a; }
-    .footer-note { margin-top: 14px; font-size: 0.75rem; color: #3b5b78; text-align: center; border-top: 1px solid #d9e4ef; padding-top: 12px; }
+    .badge-focus { background: #fdebd0; color: #b9770e; font-weight: 600; }
+    .badge-critical { background: #fadbd8; color: #922b21; font-weight: 600; }
+    .badge-ok { background: #d5f5e3; color: #1a6a3a; font-weight: 600; }
     .empty-state { padding: 24px; text-align: center; color: #3c6e91; background: #f2f8ff; border-radius: 30px; }
     .kpi-divider { border: none; border-top: 2px dashed #d0deec; margin: 2px 0 12px 0; }
-    .highlight-old { background-color: #fff5f0 !important; }
-    .highlight-old td { background-color: #fff5f0 !important; }
-    .highlight-old:hover td { background-color: #ffe8dc !important; }
     .btn-export { background: #1a7a4a; color: white; border: none; padding: 6px 18px; border-radius: 40px; font-weight: 500; font-size: 0.8rem; cursor: pointer; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
     .btn-export:hover { background: #0f5f38; }
     .btn-export:disabled { background: #a0b8c9; cursor: not-allowed; }
-
     .help-section { margin: 18px 0 10px 0; padding: 16px 20px; background: linear-gradient(135deg, #f0f7fe 0%, #e8f0f8 100%); border-radius: 16px; border: 1px solid #c5d9e8; }
-    .help-section h3 { margin: 0 0 10px 0; font-size: 1rem; font-weight: 600; color: #0b2b4a; display: flex; align-items: center; gap: 8px; }
     .help-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px 16px; }
     .help-item { display: flex; align-items: flex-start; gap: 8px; font-size: 0.85rem; color: #1a3d5a; line-height: 1.4; }
     .help-item .icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
-    .help-item .text { font-size: 0.82rem; }
-    .help-item .text strong { color: #0b2b4a; }
-    .developer-credit { margin-top: 10px; text-align: right; font-size: 0.75rem; color: #4a6f8c; border-top: 1px solid #d0dfec; padding-top: 8px; letter-spacing: 0.3px; }
-    .developer-credit strong { color: #1a4970; }
-
-    @media (max-width: 900px) { .charts-row-2 { grid-template-columns: 1fr; } .charts-row-3 { grid-template-columns: 1fr; } .help-grid { grid-template-columns: 1fr; } }
+    .developer-credit { margin-top: 10px; text-align: right; font-size: 0.75rem; color: #4a6f8c; border-top: 1px solid #d0dfec; padding-top: 8px; }
+    .legend-simple { display: flex; flex-wrap: wrap; align-items: center; gap: 16px 24px; padding: 6px 0 10px 0; font-size: 0.78rem; color: #1a3d5a; }
+    .legend-simple .item { display: flex; align-items: center; gap: 5px; }
+    .legend-simple .color-box { display: inline-block; width: 16px; height: 16px; border-radius: 3px; border: 1px solid #c0c8d4; flex-shrink: 0; }
+    .legend-simple .color-box.actual { background: #2a7faa; }
+    .legend-simple .color-box.earmarked { background: #f39c12; }
+    .legend-simple .color-box.balance { background: #27ae60; }
+    .focus-row { background: #fef9f0 !important; }
+    .focus-row:hover td { background: #fef0d5 !important; }
+    .critical-row { background: #fdf0ef !important; }
+    .critical-row:hover td { background: #fce4e3 !important; }
+    @media (max-width: 900px) { .charts-row-2 { grid-template-columns: 1fr; } }
+    .sort-indicator { font-size: 0.7rem; margin-left: 4px; }
   </style>
 </head>
 <body>
 <div class="container">
-  <h1>PRDP-RPCO I <small>Earmarked & Balances Dashboard</small></h1>
-  <div class="subhead">
-    Sheet: <strong>Earmarked Collector</strong> · <strong>Balance Collector</strong> · Trend · Aging · Balances Performance · Filters · Export to Excel
-  </div>
+  <h1>PRDP-RPCO I <small>Earmarked · Balances · Obligation · Reconciliation (100% Stacked)</small></h1>
+  <div class="subhead">Sheets: Earmarked Collector · Balance Collector · Obligation Collector · Reconciliation</div>
 
   <div class="upload-area">
     <label for="file-input">📁 Upload .xlsx</label>
@@ -105,16 +98,15 @@
   </div>
 
   <div class="tabs">
-    <button class="tab-btn active" data-tab="earmarked">📊 Earmarked Data</button>
-    <button class="tab-btn" data-tab="balances">💰 Balances Data</button>
+    <button class="tab-btn active" data-tab="earmarked">📊 Earmarked</button>
+    <button class="tab-btn" data-tab="balances">💰 Balances</button>
+    <button class="tab-btn" data-tab="obligation">🧾 Obligation</button>
+    <button class="tab-btn" data-tab="reconciliation">📋 Reconciliation</button>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- TAB 1: EARMARKED DATA -->
-  <!-- ============================================================ -->
+  <!-- ==================== EARMARKED TAB ==================== -->
   <div id="tab-earmarked" class="tab-content active">
-    <div class="kpi-section">
-      <div class="kpi-section-title">📊 Full Dataset KPIs (all loaded rows)</div>
+    <div class="kpi-section"><div class="kpi-section-title">📊 Full Dataset KPIs</div>
       <div class="kpi-grid" id="kpi-full">
         <div class="kpi-card"><div class="kpi-label">Total Earmarked</div><div class="kpi-value" id="kpi-full-total">—</div><div class="kpi-sub">PHP</div></div>
         <div class="kpi-card"><div class="kpi-label">Line Items</div><div class="kpi-value" id="kpi-full-items">—</div><div class="kpi-sub">entries</div></div>
@@ -125,8 +117,7 @@
       </div>
     </div>
     <hr class="kpi-divider">
-    <div class="kpi-section">
-      <div class="kpi-section-title">🔍 Filtered View KPIs (current table data)</div>
+    <div class="kpi-section"><div class="kpi-section-title">🔍 Filtered View KPIs</div>
       <div class="kpi-grid" id="kpi-filtered">
         <div class="kpi-card filtered"><div class="kpi-label">Total Earmarked</div><div class="kpi-value" id="kpi-filtered-total">—</div><div class="kpi-sub">PHP (filtered)</div></div>
         <div class="kpi-card filtered"><div class="kpi-label">Line Items</div><div class="kpi-value" id="kpi-filtered-items">—</div><div class="kpi-sub">entries (filtered)</div></div>
@@ -137,20 +128,19 @@
       </div>
     </div>
     <div class="charts-row-2">
-      <div class="chart-box"><h3>📈 Monthly Earmarked Trend (filtered)</h3><canvas id="trendChart" width="400" height="160"></canvas></div>
-      <div class="chart-box"><h3>📊 Aging by PR Date (filtered)</h3><canvas id="agingChart" width="400" height="160"></canvas></div>
+      <div class="chart-box"><h3>📈 Monthly Earmarked Trend</h3><canvas id="trendChart" width="400" height="160"></canvas></div>
+      <div class="chart-box"><h3>📊 Aging by PR Date</h3><canvas id="agingChart" width="400" height="160"></canvas></div>
     </div>
-    <div class="charts-row-1"><div class="chart-box full-width"><h3>📊 Earmarked by Component (filtered)</h3><canvas id="barChart" width="800" height="180"></canvas></div></div>
-    <div class="charts-row-1"><div class="chart-box full-width"><h3>📊 Earmarked by ASA (filtered)</h3><canvas id="asaChart" width="800" height="180"></canvas></div></div>
-    <div class="charts-row-1"><div class="chart-box full-width"><h3>📊 Earmarked by Category (filtered)</h3><canvas id="categoryChart" width="800" height="180"></canvas></div></div>
-
+    <div class="charts-row-1"><div class="chart-box"><h3>📊 Earmarked by Component</h3><canvas id="barChart" width="800" height="180"></canvas></div></div>
+    <div class="charts-row-1"><div class="chart-box"><h3>📊 Earmarked by ASA</h3><canvas id="asaChart" width="800" height="180"></canvas></div></div>
+    <div class="charts-row-1"><div class="chart-box"><h3>📊 Earmarked by Category</h3><canvas id="categoryChart" width="800" height="180"></canvas></div></div>
     <div class="toolbar">
       <div class="filter-group">
         <input type="text" id="search-input" placeholder="🔍 Search particulars..." style="min-width:150px;">
         <select id="component-filter"><option value="">All Components</option></select>
         <select id="category-filter"><option value="">All Categories</option></select>
         <select id="asa-filter"><option value="">All ASA</option></select>
-        <select id="month-filter"><option value="">All Months</option>
+        <select id="month-filter"><option value="">All Months">
           <option value="0">Jan</option><option value="1">Feb</option><option value="2">Mar</option>
           <option value="3">Apr</option><option value="4">May</option><option value="5">Jun</option>
           <option value="6">Jul</option><option value="7">Aug</option><option value="8">Sep</option>
@@ -158,10 +148,10 @@
         </select>
         <select id="aging-filter"><option value="">All Ages</option><option value="0-30">0-30 days</option><option value="31-60">31-60 days</option><option value="61-90">61-90 days</option><option value="90+">90+ days</option></select>
       </div>
-      <div style="display: flex; gap: 6px; align-items: center;">
+      <div style="display:flex; gap:6px; align-items:center;">
         <span class="badge" id="row-counter">0 rows</span>
         <button id="reset-filters" style="background:transparent; border:1px solid #b7ccdf; border-radius:40px; padding:4px 14px; cursor:pointer; font-size:0.8rem;">↺ Reset</button>
-        <button id="export-btn" class="btn-export" disabled>📥 Export Table to Excel</button>
+        <button id="export-btn" class="btn-export" disabled>📥 Export Table</button>
       </div>
     </div>
     <div class="table-wrap">
@@ -171,104 +161,50 @@
           <th data-col="3">PR Date</th><th data-col="4">PR No.</th><th data-col="5">Particulars</th>
           <th data-col="6" style="text-align:right;">Earmarked (₱)</th><th data-col="7" style="text-align:center;">Age (days)</th>
         </tr></thead>
-        <tbody id="table-body"><tr><td colspan="8" class="empty-state">⬆️ Upload the Excel file to load data from "Earmarked Collector"</td></tr></tbody>
+        <tbody id="table-body"><tr><td colspan="8" class="empty-state">⬆️ Upload Excel file</td></tr></tbody>
       </table>
-    </div>
-    <div class="help-section">
-      <h3><span>💡</span> How This Helps Your Work</h3>
-      <div class="help-grid">
-        <div class="help-item"><span class="icon">🔍</span><span class="text"><strong>Identify aging items</strong> – Quickly see which earmarked items are &gt; 60 or &gt; 90 days old and need follow-up</span></div>
-        <div class="help-item"><span class="icon">📈</span><span class="text"><strong>Track monthly trends</strong> – See if earmarking is increasing or decreasing over time</span></div>
-        <div class="help-item"><span class="icon">🎯</span><span class="text"><strong>Spot concentration</strong> – Identify which ASAs, Components, or Categories have the most funds</span></div>
-        <div class="help-item"><span class="icon">📋</span><span class="text"><strong>Monitor obligations</strong> – This is <strong>UN-OBLIGATED</strong> earmarked data, so you can track what still needs to be obligated</span></div>
-        <div class="help-item"><span class="icon">📥</span><span class="text"><strong>Export reports</strong> – Generate Excel reports for your superiors or for further analysis</span></div>
-      </div>
-      <div class="developer-credit">System Developed by <strong>DEO G. RIVERA</strong></div>
     </div>
   </div>
 
-  <!-- ============================================================ -->
-  <!-- TAB 2: BALANCES DATA -->
-  <!-- ============================================================ -->
+  <!-- ==================== BALANCES TAB ==================== -->
   <div id="tab-balances" class="tab-content">
-
-    <!-- KPI Section: FULL DATA -->
-    <div class="kpi-section">
-      <div class="kpi-section-title">💰 Balances Overview (all loaded rows)</div>
+    <div class="kpi-section"><div class="kpi-section-title">💰 Balances Overview</div>
       <div class="kpi-grid" id="kpi-balances-full">
         <div class="kpi-card"><div class="kpi-label">Total Balance</div><div class="kpi-value" id="kpi-bal-total">—</div><div class="kpi-sub">PHP</div></div>
         <div class="kpi-card"><div class="kpi-label">Total Allocation</div><div class="kpi-value" id="kpi-bal-alloc">—</div><div class="kpi-sub">PHP</div></div>
-        <div class="kpi-card success"><div class="kpi-label">Overall Utilization</div><div class="kpi-value" id="kpi-bal-util">—</div><div class="kpi-sub">% obligated</div></div>
+        <div class="kpi-card success"><div class="kpi-label">Overall Utilization</div><div class="kpi-value" id="kpi-bal-util">—</div><div class="kpi-sub">% utilized</div></div>
         <div class="kpi-card info"><div class="kpi-label">Balance/Allocation Ratio</div><div class="kpi-value" id="kpi-bal-ratio" style="font-size:1.2rem;">—</div><div class="kpi-sub">% unspent</div></div>
         <div class="kpi-card warning"><div class="kpi-label">⚠️ Low Utilization (<50%)</div><div class="kpi-value" id="kpi-bal-lowutil">—</div><div class="kpi-sub">components</div></div>
         <div class="kpi-card danger"><div class="kpi-label">Largest Balance</div><div class="kpi-value" id="kpi-bal-largest" style="font-size:1.2rem;">—</div><div class="kpi-sub">single item</div></div>
       </div>
     </div>
-
     <hr class="kpi-divider">
-
-    <!-- KPI Section: FILTERED DATA -->
-    <div class="kpi-section">
-      <div class="kpi-section-title">🔍 Filtered View KPIs (current table data)</div>
+    <div class="kpi-section"><div class="kpi-section-title">🔍 Filtered View KPIs</div>
       <div class="kpi-grid" id="kpi-balances-filtered">
         <div class="kpi-card filtered"><div class="kpi-label">Total Balance</div><div class="kpi-value" id="kpi-bal-filt-total">—</div><div class="kpi-sub">PHP (filtered)</div></div>
         <div class="kpi-card filtered"><div class="kpi-label">Total Allocation</div><div class="kpi-value" id="kpi-bal-filt-alloc">—</div><div class="kpi-sub">PHP (filtered)</div></div>
-        <div class="kpi-card filtered success"><div class="kpi-label">Overall Utilization</div><div class="kpi-value" id="kpi-bal-filt-util">—</div><div class="kpi-sub">% obligated (filtered)</div></div>
+        <div class="kpi-card filtered success"><div class="kpi-label">Overall Utilization</div><div class="kpi-value" id="kpi-bal-filt-util">—</div><div class="kpi-sub">% utilized (filtered)</div></div>
         <div class="kpi-card filtered info"><div class="kpi-label">Balance/Allocation Ratio</div><div class="kpi-value" id="kpi-bal-filt-ratio" style="font-size:1.2rem;">—</div><div class="kpi-sub">% unspent (filtered)</div></div>
         <div class="kpi-card filtered warning"><div class="kpi-label">⚠️ Low Utilization (<50%)</div><div class="kpi-value" id="kpi-bal-filt-lowutil">—</div><div class="kpi-sub">components (filtered)</div></div>
         <div class="kpi-card filtered danger"><div class="kpi-label">Largest Balance</div><div class="kpi-value" id="kpi-bal-filt-largest" style="font-size:1.2rem;">—</div><div class="kpi-sub">single item (filtered)</div></div>
       </div>
     </div>
-
-    <!-- Performance Charts Row 1: Allocation vs Balance + Utilization Gauge with Amounts -->
     <div class="charts-row-2">
-      <div class="chart-box tall">
-        <h3>📊 Allocation vs Balance by Component (Horizontal)</h3>
-        <canvas id="balAllocVsBalanceChart" width="400" height="200"></canvas>
-      </div>
-      <div class="chart-box gauge">
-        <h3>🎯 Utilization Rate Gauge</h3>
-        <canvas id="balGaugeChart" width="400" height="180"></canvas>
-      </div>
+      <div class="chart-box tall"><h3>📊 Allocation vs Balance by Component</h3><canvas id="balAllocVsBalanceChart" width="400" height="200"></canvas></div>
+      <div class="chart-box gauge"><h3>🎯 Utilization Gauge</h3><canvas id="balGaugeChart" width="400" height="180"></canvas></div>
     </div>
-
-    <!-- Performance Charts Row 2: Low Utilization Components with Amounts + Original Balance Charts -->
     <div class="charts-row-2">
-      <div class="chart-box tall">
-        <h3>⚠️ Components with Low Utilization (<50%)</h3>
-        <canvas id="balLowUtilChart" width="400" height="200"></canvas>
-      </div>
-      <div class="chart-box">
-        <h3>📊 Balance by Component</h3>
-        <canvas id="balCompChart" width="400" height="160"></canvas>
-      </div>
+      <div class="chart-box tall"><h3>⚠️ Low Utilization (<50%)</h3><canvas id="balLowUtilChart" width="400" height="200"></canvas></div>
+      <div class="chart-box"><h3>📊 Balance by Component</h3><canvas id="balCompChart" width="400" height="160"></canvas></div>
     </div>
-
-    <!-- Original Charts Row 3: Balance by ASA + Category -->
     <div class="charts-row-2">
-      <div class="chart-box">
-        <h3>📊 Balance by ASA</h3>
-        <canvas id="balAsaChart" width="400" height="160"></canvas>
-      </div>
-      <div class="chart-box">
-        <h3>📊 Balance by Category</h3>
-        <canvas id="balCatChart" width="400" height="160"></canvas>
-      </div>
+      <div class="chart-box"><h3>📊 Balance by ASA</h3><canvas id="balAsaChart" width="400" height="160"></canvas></div>
+      <div class="chart-box"><h3>📊 Balance by Category</h3><canvas id="balCatChart" width="400" height="160"></canvas></div>
     </div>
-
-    <!-- Original Charts Row 4: Top 10 + Donut -->
     <div class="charts-row-2">
-      <div class="chart-box">
-        <h3>🏆 Top 10 Largest Balances</h3>
-        <canvas id="balTopChart" width="400" height="160"></canvas>
-      </div>
-      <div class="chart-box">
-        <h3>🍩 Balance Distribution by Component</h3>
-        <canvas id="balDonutChart" width="400" height="160"></canvas>
-      </div>
+      <div class="chart-box"><h3>🏆 Top 10 Largest Balances</h3><canvas id="balTopChart" width="400" height="160"></canvas></div>
+      <div class="chart-box"><h3>🍩 Balance Distribution</h3><canvas id="balDonutChart" width="400" height="160"></canvas></div>
     </div>
-
-    <!-- Toolbar -->
     <div class="toolbar">
       <div class="filter-group">
         <input type="text" id="bal-search-input" placeholder="🔍 Search particulars..." style="min-width:150px;">
@@ -277,1275 +213,1585 @@
         <select id="bal-asa-filter"><option value="">All ASA</option></select>
         <select id="bal-min-balance"><option value="">Min Balance</option><option value="1000">> ₱1,000</option><option value="10000">> ₱10,000</option><option value="100000">> ₱100,000</option><option value="1000000">> ₱1,000,000</option></select>
       </div>
-      <div style="display: flex; gap: 6px; align-items: center;">
+      <div style="display:flex; gap:6px; align-items:center;">
         <span class="badge" id="bal-row-counter">0 rows</span>
         <button id="bal-reset-filters" style="background:transparent; border:1px solid #b7ccdf; border-radius:40px; padding:4px 14px; cursor:pointer; font-size:0.8rem;">↺ Reset</button>
-        <button id="bal-export-btn" class="btn-export" disabled>📥 Export Table to Excel</button>
+        <button id="bal-export-btn" class="btn-export" disabled>📥 Export Table</button>
       </div>
     </div>
-
-    <!-- Table -->
     <div class="table-wrap">
       <table id="bal-data-table">
         <thead id="bal-table-head"><tr>
           <th data-col="0">Component</th><th data-col="1">Category</th><th data-col="2">ASA Sheet</th>
           <th data-col="3">Particulars</th><th data-col="4" style="text-align:right;">Allocation (₱)</th>
-          <th data-col="5" style="text-align:right;">Total Obligation (₱)</th>
-          <th data-col="6" style="text-align:right;">Balance (₱)</th>
-          <th data-col="7" style="text-align:center;">Utilization Rate</th>
+          <th data-col="5" style="text-align:right;">Balance (₱)</th><th data-col="6" style="text-align:center;">Utilization Rate</th>
         </tr></thead>
-        <tbody id="bal-table-body"><tr><td colspan="8" class="empty-state">⬆️ Upload the Excel file to load data from "Balance Collector"</td></tr></tbody>
+        <tbody id="bal-table-body"><tr><td colspan="7" class="empty-state">⬆️ Upload Excel file</td></tr></tbody>
       </table>
     </div>
+  </div>
 
+  <!-- ==================== OBLIGATION TAB ==================== -->
+  <div id="tab-obligation" class="tab-content">
+    <div class="kpi-section"><div class="kpi-section-title">🧾 Obligation Overview</div>
+      <div class="kpi-grid" id="kpi-oblig-full">
+        <div class="kpi-card"><div class="kpi-label">Total Actual Obligation</div><div class="kpi-value" id="kpi-obl-total">—</div><div class="kpi-sub">PHP</div></div>
+        <div class="kpi-card"><div class="kpi-label">Line Items</div><div class="kpi-value" id="kpi-obl-items">—</div><div class="kpi-sub">entries</div></div>
+        <div class="kpi-card"><div class="kpi-label">Unique Components</div><div class="kpi-value" id="kpi-obl-components">—</div><div class="kpi-sub">categories</div></div>
+        <div class="kpi-card"><div class="kpi-label">Latest ORS Date</div><div class="kpi-value" id="kpi-obl-latest" style="font-size:1.2rem;">—</div><div class="kpi-sub">most recent</div></div>
+        <div class="kpi-card warning"><div class="kpi-label">Top Category</div><div class="kpi-value" id="kpi-obl-topcat" style="font-size:1.1rem;">—</div><div class="kpi-sub">by obligation</div></div>
+        <div class="kpi-card danger"><div class="kpi-label">Largest Obligation</div><div class="kpi-value" id="kpi-obl-largest" style="font-size:1.2rem;">—</div><div class="kpi-sub">single item</div></div>
+      </div>
+    </div>
+    <hr class="kpi-divider">
+    <div class="kpi-section"><div class="kpi-section-title">🔍 Filtered View KPIs</div>
+      <div class="kpi-grid" id="kpi-oblig-filtered">
+        <div class="kpi-card filtered"><div class="kpi-label">Total Actual Obligation</div><div class="kpi-value" id="kpi-obl-filt-total">—</div><div class="kpi-sub">PHP (filtered)</div></div>
+        <div class="kpi-card filtered"><div class="kpi-label">Line Items</div><div class="kpi-value" id="kpi-obl-filt-items">—</div><div class="kpi-sub">entries (filtered)</div></div>
+        <div class="kpi-card filtered"><div class="kpi-label">Unique Components</div><div class="kpi-value" id="kpi-obl-filt-components">—</div><div class="kpi-sub">categories (filtered)</div></div>
+        <div class="kpi-card filtered"><div class="kpi-label">Latest ORS Date</div><div class="kpi-value" id="kpi-obl-filt-latest" style="font-size:1.2rem;">—</div><div class="kpi-sub">most recent (filtered)</div></div>
+        <div class="kpi-card filtered warning"><div class="kpi-label">Top Category</div><div class="kpi-value" id="kpi-obl-filt-topcat" style="font-size:1.1rem;">—</div><div class="kpi-sub">by obligation (filtered)</div></div>
+        <div class="kpi-card filtered danger"><div class="kpi-label">Largest Obligation</div><div class="kpi-value" id="kpi-obl-filt-largest" style="font-size:1.2rem;">—</div><div class="kpi-sub">single item (filtered)</div></div>
+      </div>
+    </div>
+    <div class="charts-row-2">
+      <div class="chart-box"><h3>📈 Monthly Obligation Trend by ORS Date</h3><canvas id="oblTrendChart" width="400" height="160"></canvas></div>
+      <div class="chart-box"><h3>📊 Obligation by Component</h3><canvas id="oblCompChart" width="400" height="160"></canvas></div>
+    </div>
+    <div class="charts-row-2">
+      <div class="chart-box"><h3>📊 Obligation by ASA</h3><canvas id="oblAsaChart" width="400" height="160"></canvas></div>
+      <div class="chart-box"><h3>📊 Obligation by Category</h3><canvas id="oblCatChart" width="400" height="160"></canvas></div>
+    </div>
+    <div class="charts-row-1"><div class="chart-box"><h3>🏆 Top 10 Largest Obligations</h3><canvas id="oblTopChart" width="800" height="180"></canvas></div></div>
+    <div class="toolbar">
+      <div class="filter-group">
+        <input type="text" id="obl-search-input" placeholder="🔍 Search particulars..." style="min-width:150px;">
+        <select id="obl-component-filter"><option value="">All Components</option></select>
+        <select id="obl-category-filter"><option value="">All Categories</option></select>
+        <select id="obl-asa-filter"><option value="">All ASA</option></select>
+        <select id="obl-min-oblig"><option value="">Min Obligation</option><option value="1000">> ₱1,000</option><option value="10000">> ₱10,000</option><option value="100000">> ₱100,000</option><option value="1000000">> ₱1,000,000</option></select>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <span class="badge" id="obl-row-counter">0 rows</span>
+        <button id="obl-reset-filters" style="background:transparent; border:1px solid #b7ccdf; border-radius:40px; padding:4px 14px; cursor:pointer; font-size:0.8rem;">↺ Reset</button>
+        <button id="obl-export-btn" class="btn-export" disabled>📥 Export Table</button>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table id="obl-data-table">
+        <thead id="obl-table-head"><tr>
+          <th data-col="0">Component</th><th data-col="1">Category</th><th data-col="2">ASA Sheet</th>
+          <th data-col="3">PR Date</th><th data-col="4">PR No.</th><th data-col="5">ORS Date</th>
+          <th data-col="6">ORS No.</th><th data-col="7">Particulars</th><th data-col="8" style="text-align:right;">Actual Obligation (₱)</th>
+        </tr></thead>
+        <tbody id="obl-table-body"><tr><td colspan="9" class="empty-state">⬆️ Upload Excel file</td></tr></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ==================== RECONCILIATION TAB ==================== -->
+  <div id="tab-reconciliation" class="tab-content">
+    <div class="kpi-section"><div class="kpi-section-title">📋 Reconciliation Overview</div>
+      <div class="kpi-grid" id="kpi-recon-full">
+        <div class="kpi-card"><div class="kpi-label">Total Actual</div><div class="kpi-value" id="kpi-recon-actual">—</div><div class="kpi-sub">PHP</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Earmarked</div><div class="kpi-value" id="kpi-recon-earmarked">—</div><div class="kpi-sub">PHP</div></div>
+        <div class="kpi-card"><div class="kpi-label">Total Balance</div><div class="kpi-value" id="kpi-recon-balance">—</div><div class="kpi-sub">PHP</div></div>
+        <div class="kpi-card info"><div class="kpi-label">Categories</div><div class="kpi-value" id="kpi-recon-cats" style="font-size:1.2rem;">—</div><div class="kpi-sub">grouped</div></div>
+        <div class="kpi-card success"><div class="kpi-label">Allocation (Actual+Bal)</div><div class="kpi-value" id="kpi-recon-alloc" style="font-size:1.2rem;">—</div><div class="kpi-sub">PHP</div></div>
+      </div>
+    </div>
+    <hr class="kpi-divider">
+    
+    <!-- Focus Areas KPIs -->
+    <div class="kpi-section">
+      <div class="kpi-section-title">🎯 Focus Areas - Items Needing Attention</div>
+      <div class="kpi-grid">
+        <div class="kpi-card focus">
+          <div class="kpi-label">⚠️ Monitor Items</div>
+          <div class="kpi-value" id="kpi-recon-monitor" style="color:#b9770e;">—</div>
+          <div class="kpi-sub">Balance > Actual or Balance > Earmarked</div>
+        </div>
+        <div class="kpi-card critical">
+          <div class="kpi-label">🚨 Critical Items</div>
+          <div class="kpi-value" id="kpi-recon-critical" style="color:#c0392b;">—</div>
+          <div class="kpi-sub">Balance > 2x Actual</div>
+        </div>
+        <div class="kpi-card warning">
+          <div class="kpi-label">💰 Total Balance in Critical Items</div>
+          <div class="kpi-value" id="kpi-recon-critical-total" style="font-size:1.2rem;">—</div>
+          <div class="kpi-sub">PHP (sum of critical items)</div>
+        </div>
+        <div class="kpi-card danger">
+          <div class="kpi-label">🔴 Largest Balance</div>
+          <div class="kpi-value" id="kpi-recon-largest-bal" style="font-size:1.2rem;">—</div>
+          <div class="kpi-sub">single item</div>
+        </div>
+      </div>
+    </div>
+    <hr class="kpi-divider">
+    
+    <div class="kpi-section"><div class="kpi-section-title">🔍 Filtered View KPIs</div>
+      <div class="kpi-grid" id="kpi-recon-filtered">
+        <div class="kpi-card filtered"><div class="kpi-label">Total Actual</div><div class="kpi-value" id="kpi-recon-filt-actual">—</div><div class="kpi-sub">PHP (filtered)</div></div>
+        <div class="kpi-card filtered"><div class="kpi-label">Total Earmarked</div><div class="kpi-value" id="kpi-recon-filt-earmarked">—</div><div class="kpi-sub">PHP (filtered)</div></div>
+        <div class="kpi-card filtered"><div class="kpi-label">Total Balance</div><div class="kpi-value" id="kpi-recon-filt-balance">—</div><div class="kpi-sub">PHP (filtered)</div></div>
+        <div class="kpi-card filtered info"><div class="kpi-label">Categories</div><div class="kpi-value" id="kpi-recon-filt-cats" style="font-size:1.2rem;">—</div><div class="kpi-sub">grouped (filtered)</div></div>
+        <div class="kpi-card filtered success"><div class="kpi-label">Allocation (Actual+Bal)</div><div class="kpi-value" id="kpi-recon-filt-alloc" style="font-size:1.2rem;">—</div><div class="kpi-sub">PHP (filtered)</div></div>
+      </div>
+    </div>
+
+    <div class="charts-row-1">
+      <div class="chart-box tall">
+        <h3>📊 Reconciliation: Actual vs Earmarked vs Balance (100% Stacked)</h3>
+        <canvas id="reconStackedChart" width="800" height="280"></canvas>
+      </div>
+    </div>
+    
+    <!-- Focus Areas Chart -->
+    <div class="charts-row-1">
+      <div class="chart-box tall">
+        <h3>⚠️ Critical Items: High Balance vs Low Actual/Earmarked</h3>
+        <canvas id="reconFocusChart" width="800" height="260"></canvas>
+      </div>
+    </div>
+    
+    <div class="legend-simple">
+      <span style="font-weight:600; font-size:0.75rem; color:#0b2b4a;">📊 Legend:</span>
+      <span class="item"><span class="color-box actual"></span> Actual</span>
+      <span class="item"><span class="color-box earmarked"></span> Earmarked</span>
+      <span class="item"><span class="color-box balance"></span> Balance</span>
+      <span style="font-size:0.7rem; color:#4a6f8c; margin-left:4px;">| Each bar sums to 100% · labels show %</span>
+    </div>
+
+    <div class="toolbar">
+      <div class="filter-group">
+        <input type="text" id="recon-search-input" placeholder="🔍 Search category..." style="min-width:150px;">
+        <select id="recon-component-filter"><option value="">All Components</option></select>
+        <select id="recon-category-filter"><option value="">All Categories</option></select>
+        <select id="recon-asa-filter"><option value="">All ASA</option></select>
+        <select id="recon-min-alloc"><option value="">Min Allocation</option><option value="1000">> ₱1,000</option><option value="10000">> ₱10,000</option><option value="100000">> ₱100,000</option><option value="1000000">> ₱1,000,000</option></select>
+        <select id="recon-status-filter"><option value="">All Status</option><option value="monitor">⚠️ Monitor</option><option value="critical">🚨 Critical</option><option value="ok">✅ OK</option></select>
+      </div>
+      <div style="display:flex; gap:6px; align-items:center;">
+        <span class="badge" id="recon-row-counter">0 rows</span>
+        <button id="recon-reset-filters" style="background:transparent; border:1px solid #b7ccdf; border-radius:40px; padding:4px 14px; cursor:pointer; font-size:0.8rem;">↺ Reset</button>
+        <button id="recon-export-btn" class="btn-export" disabled>📥 Export Table</button>
+      </div>
+    </div>
+
+    <div class="table-wrap">
+      <table id="recon-data-table">
+        <thead id="recon-table-head"><tr>
+          <th data-col="0">Component</th><th data-col="1">Category</th><th data-col="2">ASA Sheet</th>
+          <th data-col="3" style="text-align:right;">Actual (₱)</th>
+          <th data-col="4" style="text-align:right;">Earmarked (₱)</th>
+          <th data-col="5" style="text-align:right;">Balance (₱)</th>
+          <th data-col="6" style="text-align:center;">Allocation (Actual+Bal)</th>
+          <th data-col="7" style="text-align:center;">Status</th>
+        </tr></thead>
+        <tbody id="recon-table-body"><tr><td colspan="8" class="empty-state">⬆️ Upload Excel file with "Reconciliation" sheet</td></tr></tbody>
+      </table>
+    </div>
+    
     <div class="help-section">
-      <h3><span>💡</span> How This Helps Your Work</h3>
+      <h3><span>💡</span> Status Definitions</h3>
       <div class="help-grid">
-        <div class="help-item"><span class="icon">💰</span><span class="text"><strong>Identify large balances</strong> – Quickly see which items have the biggest unspent funds that need attention</span></div>
-        <div class="help-item"><span class="icon">📊</span><span class="text"><strong>Track utilization</strong> – See which components or categories have low utilization rates and may need intervention</span></div>
-        <div class="help-item"><span class="icon">🎯</span><span class="text"><strong>Spot concentration</strong> – Identify which ASAs, Components, or Categories hold the majority of unspent funds</span></div>
-        <div class="help-item"><span class="icon">📋</span><span class="text"><strong>Monitor balances</strong> – Track remaining balances <strong>(Alloc less Total Oblig)</strong> to ensure funds are being utilized efficiently</span></div>
-        <div class="help-item"><span class="icon">📈</span><span class="text"><strong>Performance analysis</strong> – Compare Allocation vs Balance to identify underutilized areas</span></div>
-        <div class="help-item"><span class="icon">📥</span><span class="text"><strong>Export reports</strong> – Generate Excel reports for your superiors or for further analysis</span></div>
+        <div class="help-item"><span class="icon">🚨</span><span class="text"><strong>CRITICAL</strong> – Balance is more than 2x Actual. These items require immediate attention.</span></div>
+        <div class="help-item"><span class="icon">⚠️</span><span class="text"><strong>Monitor</strong> – Balance exceeds Actual or Earmarked. These items should be reviewed.</span></div>
+        <div class="help-item"><span class="icon">✅</span><span class="text"><strong>OK</strong> – Balance is less than or equal to both Actual and Earmarked. No immediate action needed.</span></div>
+        <div class="help-item"><span class="icon">📊</span><span class="text"><strong>Focus Chart</strong> – Shows only Critical items for quick identification of problem areas.</span></div>
       </div>
       <div class="developer-credit">System Developed by <strong>DEO G. RIVERA</strong></div>
     </div>
   </div>
-
 </div>
 
 <script>
-  (function() {
-    // ================================================================
-    // GLOBAL STATE
-    // ================================================================
-    let fullData = [];
-    let filteredData = [];
-    let sortConfig = { col: null, asc: true };
-    let balFullData = [];
-    let balFilteredData = [];
-    let balSortConfig = { col: null, asc: true };
+  // ================================================================
+  // GLOBAL STATE
+  // ================================================================
+  let fullData = [], filteredData = [], sortConfig = { col: null, asc: true };
+  let balFullData = [], balFilteredData = [], balSortConfig = { col: null, asc: true };
+  let oblFullData = [], oblFilteredData = [], oblSortConfig = { col: null, asc: true };
+  let reconFullData = [], reconFilteredData = [], reconSortConfig = { col: null, asc: true };
 
-    let barChart = null, agingChart = null, trendChart = null;
-    let asaChart = null, categoryChart = null;
-    let balCompChart = null, balCatChart = null, balAsaChart = null;
-    let balTopChart = null, balDonutChart = null;
-    let balAllocVsBalanceChart = null, balGaugeChart = null;
-    let balLowUtilChart = null;
+  // Chart instances
+  let barChart, agingChart, trendChart, asaChart, categoryChart;
+  let balCompChart, balCatChart, balAsaChart, balTopChart, balDonutChart;
+  let balAllocVsBalanceChart, balGaugeChart, balLowUtilChart;
+  let oblCompChart, oblCatChart, oblAsaChart, oblTopChart, oblTrendChart;
+  let reconStackedChart = null, reconFocusChart = null;
 
-    const TODAY = new Date();
+  const TODAY = new Date();
+  const MONTH_NAMES = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-    // DOM refs - Earmarked
-    const fileInput = document.getElementById('file-input');
-    const fileStatus = document.getElementById('file-status');
-    const tbody = document.getElementById('table-body');
-    const thead = document.getElementById('table-head');
-    const searchInput = document.getElementById('search-input');
-    const compFilter = document.getElementById('component-filter');
-    const catFilter = document.getElementById('category-filter');
-    const asaFilter = document.getElementById('asa-filter');
-    const monthFilter = document.getElementById('month-filter');
-    const agingFilter = document.getElementById('aging-filter');
-    const resetBtn = document.getElementById('reset-filters');
-    const exportBtn = document.getElementById('export-btn');
-    const rowCounter = document.getElementById('row-counter');
-
-    // DOM refs - Balances
-    const balSearchInput = document.getElementById('bal-search-input');
-    const balCompFilter = document.getElementById('bal-component-filter');
-    const balCatFilter = document.getElementById('bal-category-filter');
-    const balAsaFilter = document.getElementById('bal-asa-filter');
-    const balMinBalance = document.getElementById('bal-min-balance');
-    const balResetBtn = document.getElementById('bal-reset-filters');
-    const balExportBtn = document.getElementById('bal-export-btn');
-    const balRowCounter = document.getElementById('bal-row-counter');
-    const balTbody = document.getElementById('bal-table-body');
-    const balThead = document.getElementById('bal-table-head');
-
-    // Tab switching
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
-    tabBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        tabBtns.forEach(b => b.classList.remove('active'));
-        tabContents.forEach(c => c.classList.remove('active'));
-        this.classList.add('active');
-        document.getElementById('tab-' + this.dataset.tab).classList.add('active');
-        setTimeout(() => {
-          if (window.chartInstances) {
-            window.chartInstances.forEach(chart => {
-              if (chart && chart.resize) chart.resize();
-            });
-          }
-        }, 100);
-      });
-    });
-
-    // ================================================================
-    // EARMARKED - Helpers
-    // ================================================================
-    function formatCurrency(val) {
-      if (val === undefined || val === null || isNaN(val)) return '0';
-      return Number(val).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  // ================================================================
+  // HELPERS
+  // ================================================================
+  function formatCurrency(val) {
+    if (val === undefined || val === null || isNaN(val)) return '0';
+    return Number(val).toLocaleString('en-PH', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  }
+  function parseNumber(val) {
+    if (val === undefined || val === null || val === '') return 0;
+    if (typeof val === 'number') return val;
+    if (typeof val === 'string') {
+      const cleaned = val.replace(/[₱,]/g, '').trim();
+      return parseFloat(cleaned) || 0;
     }
-
-    function parseExcelDate(value) {
-      if (!value) return null;
-      if (value instanceof Date && !isNaN(value)) return value;
-      if (typeof value === 'number' && value > 59) {
-        const excelEpoch = new Date(1899, 11, 30);
-        return new Date(excelEpoch.getTime() + value * 86400000);
+    return 0;
+  }
+  function parseExcelDate(value) {
+    if (!value) return null;
+    if (value instanceof Date && !isNaN(value)) return value;
+    if (typeof value === 'number' && value > 59) {
+      const excelEpoch = new Date(1899, 11, 30);
+      return new Date(excelEpoch.getTime() + value * 86400000);
+    }
+    if (typeof value === 'string') {
+      let d = new Date(value);
+      if (!isNaN(d)) return d;
+      const parts = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
+      if (parts) {
+        let m = parseInt(parts[1]), d2 = parseInt(parts[2]), y = parseInt(parts[3]);
+        if (y < 100) y += 2000;
+        return new Date(y, m - 1, d2);
       }
-      if (typeof value === 'string') {
-        let d = new Date(value);
-        if (!isNaN(d)) return d;
-        const parts = value.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{2,4})/);
-        if (parts) {
-          let m = parseInt(parts[1]), d2 = parseInt(parts[2]), y = parseInt(parts[3]);
-          if (y < 100) y += 2000;
-          return new Date(y, m - 1, d2);
-        }
+    }
+    return null;
+  }
+  function formatDate(d) {
+    if (!d || !(d instanceof Date) || isNaN(d)) return '';
+    return d.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
+  }
+  function daysBetween(date1, date2) {
+    if (!date1 || !date2) return null;
+    const d1 = new Date(date1), d2 = new Date(date2);
+    d1.setHours(0,0,0,0); d2.setHours(0,0,0,0);
+    return Math.floor((d2.getTime() - d1.getTime()) / (1000*60*60*24));
+  }
+  function getAgingBucket(days) {
+    if (days === null || days === undefined) return 'Unknown';
+    if (days <= 30) return '0-30';
+    if (days <= 60) return '31-60';
+    if (days <= 90) return '61-90';
+    return '90+';
+  }
+
+  // ================================================================
+  // EARMARKED (full implementation)
+  // ================================================================
+  const tbody = document.getElementById('table-body');
+  const thead = document.getElementById('table-head');
+  const searchInput = document.getElementById('search-input');
+  const compFilter = document.getElementById('component-filter');
+  const catFilter = document.getElementById('category-filter');
+  const asaFilter = document.getElementById('asa-filter');
+  const monthFilter = document.getElementById('month-filter');
+  const agingFilter = document.getElementById('aging-filter');
+  const resetBtn = document.getElementById('reset-filters');
+  const exportBtn = document.getElementById('export-btn');
+  const rowCounter = document.getElementById('row-counter');
+
+  function loadEarmarkedData(workbook) {
+    const sheet = workbook.Sheets['Earmarked Collector'];
+    if (!sheet) { console.warn('Earmarked sheet not found.'); return; }
+    const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
+    if (!json || json.length === 0) return;
+    const headers = Object.keys(json[0]);
+    const findCol = (patterns) => {
+      for (const p of patterns) {
+        const found = headers.find(h => h.toLowerCase().includes(p.toLowerCase()));
+        if (found) return found;
       }
       return null;
+    };
+    const colComponent = findCol(['component']);
+    const colCategory = findCol(['category']);
+    const colASASheet = findCol(['asa sheet', 'asa']);
+    const colPRDate = findCol(['pr date']);
+    const colPRNo = findCol(['pr no', 'pr number']);
+    const colParticulars = findCol(['particulars', 'description']);
+    const colEarmarked = findCol(['earmarked']);
+    fullData = json.map(row => {
+      const prDate = colPRDate ? parseExcelDate(row[colPRDate]) : null;
+      return {
+        Component: colComponent ? String(row[colComponent] ?? '').trim() : '',
+        Category: colCategory ? String(row[colCategory] ?? '').trim() : '',
+        ASASheet: colASASheet ? String(row[colASASheet] ?? '').trim() : '',
+        PRDate: prDate,
+        PRNo: colPRNo ? String(row[colPRNo] ?? '').trim() : '',
+        Particulars: colParticulars ? String(row[colParticulars] ?? '').trim() : '',
+        Earmarked: colEarmarked ? parseNumber(row[colEarmarked]) : 0,
+        _prDateObj: prDate,
+      };
+    }).filter(r => r.Earmarked > 0 || r.Particulars);
+    
+    if (fullData.length === 0) {
+      console.warn('No earmarked data loaded');
+      return;
     }
+    
+    const comps = [...new Set(fullData.map(r => r.Component).filter(Boolean))];
+    const cats = [...new Set(fullData.map(r => r.Category).filter(Boolean))];
+    const asas = [...new Set(fullData.map(r => r.ASASheet).filter(Boolean))];
+    compFilter.innerHTML = '<option value="">All Components</option>' + comps.map(c => `<option value="${c}">${c}</option>`).join('');
+    catFilter.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    asaFilter.innerHTML = '<option value="">All ASA</option>' + asas.map(a => `<option value="${a}">${a}</option>`).join('');
+    sortConfig = { col: null, asc: true };
+    renderEarmarked();
+  }
 
-    function formatDate(d) {
-      if (!d || !(d instanceof Date) || isNaN(d)) return '';
-      return d.toLocaleDateString('en-PH', { year:'numeric', month:'short', day:'numeric' });
-    }
+  function renderEarmarked() {
+    const searchTerm = searchInput.value.toLowerCase().trim();
+    const compVal = compFilter.value, catVal = catFilter.value, asaVal = asaFilter.value;
+    const monthVal = monthFilter.value, agingVal = agingFilter.value;
 
-    function daysBetween(date1, date2) {
-      if (!date1 || !date2) return null;
-      const d1 = new Date(date1);
-      const d2 = new Date(date2);
-      d1.setHours(0,0,0,0);
-      d2.setHours(0,0,0,0);
-      const diff = d2.getTime() - d1.getTime();
-      return Math.floor(diff / (1000 * 60 * 60 * 24));
-    }
-
-    function getAgingBucket(days) {
-      if (days === null || days === undefined) return 'Unknown';
-      if (days <= 30) return '0-30';
-      if (days <= 60) return '31-60';
-      if (days <= 90) return '61-90';
-      return '90+';
-    }
-
-    function computeAgingStats(data) {
-      return data.map(row => {
+    let temp = fullData.filter(row => {
+      const matchSearch = !searchTerm || (row.Particulars && row.Particulars.toLowerCase().includes(searchTerm));
+      const matchComp = !compVal || row.Component === compVal;
+      const matchCat = !catVal || row.Category === catVal;
+      const matchAsa = !asaVal || row.ASASheet === asaVal;
+      let matchMonth = true;
+      if (monthVal !== '') {
+        const d = row._prDateObj;
+        matchMonth = d && d.getMonth() === parseInt(monthVal);
+      }
+      let matchAging = true;
+      if (agingVal !== '') {
         const age = row._prDateObj ? daysBetween(row._prDateObj, TODAY) : null;
-        return { ...row, _ageDays: age };
+        if (agingVal === '0-30') matchAging = age !== null && age <= 30;
+        else if (agingVal === '31-60') matchAging = age !== null && age > 30 && age <= 60;
+        else if (agingVal === '61-90') matchAging = age !== null && age > 60 && age <= 90;
+        else if (agingVal === '90+') matchAging = age !== null && age > 90;
+      }
+      return matchSearch && matchComp && matchCat && matchAsa && matchMonth && matchAging;
+    });
+    filteredData = temp;
+    if (sortConfig.col !== null) {
+      const colKey = ['Component','Category','ASASheet','PRDate','PRNo','Particulars','Earmarked','Age'];
+      const key = colKey[sortConfig.col];
+      filteredData.sort((a,b) => {
+        let va = a[key] ?? '', vb = b[key] ?? '';
+        if (key === 'Earmarked') { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+        else if (key === 'Age') { va = a._prDateObj ? daysBetween(a._prDateObj, TODAY) : -1; vb = b._prDateObj ? daysBetween(b._prDateObj, TODAY) : -1; }
+        else if (key === 'PRDate') { va = a._prDateObj ? a._prDateObj.getTime() : 0; vb = b._prDateObj ? b._prDateObj.getTime() : 0; }
+        else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+        if (va < vb) return sortConfig.asc ? -1 : 1;
+        if (va > vb) return sortConfig.asc ? 1 : -1;
+        return 0;
       });
     }
+    renderEarmarkedTable();
+    updateEarmarkedKPIs();
+    updateEarmarkedCharts();
+  }
 
-    function getMonth(date) {
-      if (!date || !(date instanceof Date) || isNaN(date)) return null;
-      return date.getMonth();
-    }
-
-    // ================================================================
-    // EARMARKED - KPIs & Charts (simplified)
-    // ================================================================
-    const kpiFullTotal = document.getElementById('kpi-full-total');
-    const kpiFullItems = document.getElementById('kpi-full-items');
-    const kpiFullComponents = document.getElementById('kpi-full-components');
-    const kpiFullLatest = document.getElementById('kpi-full-latest');
-    const kpiFullAging = document.getElementById('kpi-full-aging');
-    const kpiFullOldest = document.getElementById('kpi-full-oldest');
-    const kpiFilteredTotal = document.getElementById('kpi-filtered-total');
-    const kpiFilteredItems = document.getElementById('kpi-filtered-items');
-    const kpiFilteredComponents = document.getElementById('kpi-filtered-components');
-    const kpiFilteredLatest = document.getElementById('kpi-filtered-latest');
-    const kpiFilteredAging = document.getElementById('kpi-filtered-aging');
-    const kpiFilteredOldest = document.getElementById('kpi-filtered-oldest');
-
-    function updateEarmarkedKPIs() {
-      const fullWithAge = computeAgingStats(fullData);
-      const fullTotal = fullWithAge.reduce((sum, r) => sum + (parseFloat(r.Earmarked) || 0), 0);
-      kpiFullTotal.textContent = '₱ ' + formatCurrency(fullTotal);
-      kpiFullItems.textContent = fullWithAge.length;
-      const fullComps = new Set(fullWithAge.map(r => r.Component).filter(Boolean));
-      kpiFullComponents.textContent = fullComps.size;
-      const fullDates = fullWithAge.map(r => r._prDateObj).filter(d => d && !isNaN(d));
-      if (fullDates.length) {
-        const latest = new Date(Math.max(...fullDates.map(d => d.getTime())));
-        kpiFullLatest.textContent = formatDate(latest);
-      } else { kpiFullLatest.textContent = '—'; }
-      const agingAmount = fullWithAge.filter(r => r._ageDays !== null && r._ageDays > 60)
-        .reduce((sum, r) => sum + (parseFloat(r.Earmarked) || 0), 0);
-      kpiFullAging.textContent = '₱ ' + formatCurrency(agingAmount);
-      const validAges = fullWithAge.filter(r => r._ageDays !== null).map(r => r._ageDays);
-      if (validAges.length) { kpiFullOldest.textContent = Math.max(...validAges) + ' days'; } else { kpiFullOldest.textContent = '—'; }
-
-      const filteredWithAge = computeAgingStats(filteredData);
-      const filtTotal = filteredWithAge.reduce((sum, r) => sum + (parseFloat(r.Earmarked) || 0), 0);
-      kpiFilteredTotal.textContent = '₱ ' + formatCurrency(filtTotal);
-      kpiFilteredItems.textContent = filteredWithAge.length;
-      const filtComps = new Set(filteredWithAge.map(r => r.Component).filter(Boolean));
-      kpiFilteredComponents.textContent = filtComps.size;
-      const filtDates = filteredWithAge.map(r => r._prDateObj).filter(d => d && !isNaN(d));
-      if (filtDates.length) {
-        const latest = new Date(Math.max(...filtDates.map(d => d.getTime())));
-        kpiFilteredLatest.textContent = formatDate(latest);
-      } else { kpiFilteredLatest.textContent = '—'; }
-      const filtAgingAmount = filteredWithAge.filter(r => r._ageDays !== null && r._ageDays > 60)
-        .reduce((sum, r) => sum + (parseFloat(r.Earmarked) || 0), 0);
-      kpiFilteredAging.textContent = '₱ ' + formatCurrency(filtAgingAmount);
-      const filtValidAges = filteredWithAge.filter(r => r._ageDays !== null).map(r => r._ageDays);
-      if (filtValidAges.length) { kpiFilteredOldest.textContent = Math.max(...filtValidAges) + ' days'; } else { kpiFilteredOldest.textContent = '—'; }
-      rowCounter.textContent = filteredData.length + ' rows';
-      exportBtn.disabled = filteredData.length === 0;
-    }
-
-    // Earmarked Charts (simplified)
-    const barCanvas = document.getElementById('barChart');
-    const agingCanvas = document.getElementById('agingChart');
-    const trendCanvas = document.getElementById('trendChart');
-    const asaCanvas = document.getElementById('asaChart');
-    const categoryCanvas = document.getElementById('categoryChart');
-
-    function updateEarmarkedCharts() {
-      updateTrendChart();
-      updateAgingChart();
-      updateBarChart();
-      updateAsaChart();
-      updateCategoryChart();
-    }
-
-    function updateTrendChart() {
-      const monthMap = new Map();
-      const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-      for (let m = 0; m < 12; m++) monthMap.set(m, 0);
+  function renderEarmarkedTable() {
+    if (filteredData.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${fullData.length === 0 ? '⬆️ Upload Excel file' : 'No matching records'}</td></tr>`;
+    } else {
+      let html = '';
       filteredData.forEach(row => {
-        if (row._prDateObj && !isNaN(row._prDateObj)) {
-          const month = row._prDateObj.getMonth();
-          const val = parseFloat(row.Earmarked) || 0;
-          monthMap.set(month, (monthMap.get(month) || 0) + val);
-        }
+        const age = row._prDateObj ? daysBetween(row._prDateObj, TODAY) : null;
+        const ageStr = age !== null ? age + ' days' : '—';
+        html += `<tr>
+          <td><span class="badge">${row.Component || ''}</span></td>
+          <td>${row.Category || ''}</td>
+          <td>${row.ASASheet || ''}</td>
+          <td>${row._prDateObj ? formatDate(row._prDateObj) : ''}</td>
+          <td>${row.PRNo || ''}</td>
+          <td>${row.Particulars || ''}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.Earmarked)}</td>
+          <td style="text-align:center;">${ageStr}</td>
+        </tr>`;
       });
-      const labels = monthNames;
-      const values = labels.map((_, i) => monthMap.get(i) || 0);
-      if (trendChart) { trendChart.destroy(); trendChart = null; }
-      if (values.every(v => v === 0)) {
-        trendChart = new Chart(trendCanvas, {
-          type: 'line',
-          data: { labels: ['No data'], datasets: [{ data: [0], borderColor: '#d1dbe6', backgroundColor: 'transparent' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      trendChart = new Chart(trendCanvas, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Earmarked (PHP)',
-            data: values,
-            borderColor: '#2a7faa',
-            backgroundColor: 'rgba(42, 127, 170, 0.1)',
-            fill: true,
-            tension: 0.3,
-            pointBackgroundColor: '#2a7faa',
-            pointRadius: 4,
-            pointHoverRadius: 6,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: { legend: { display: false }, tooltip: { callbacks: { label: function(context) { return '₱ ' + formatCurrency(context.parsed.y); } } } },
-          scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } }
-        }
-      });
+      tbody.innerHTML = html;
     }
+    rowCounter.textContent = filteredData.length + ' rows';
+    exportBtn.disabled = filteredData.length === 0;
+  }
 
-    function updateAgingChart() {
-      const filteredWithAge = computeAgingStats(filteredData);
-      const buckets = { '0-30': 0, '31-60': 0, '61-90': 0, '90+': 0 };
-      filteredWithAge.forEach(row => {
-        if (row._ageDays !== null) {
-          const bucket = getAgingBucket(row._ageDays);
-          if (buckets[bucket] !== undefined) buckets[bucket] += parseFloat(row.Earmarked) || 0;
-        }
-      });
-      const labels = ['0-30 days', '31-60 days', '61-90 days', '90+ days'];
-      const values = [buckets['0-30'], buckets['31-60'], buckets['61-90'], buckets['90+']];
-      const colors = ['#4a9bc7', '#6fb3d6', '#f5c542', '#d97a7a'];
-      if (agingChart) { agingChart.destroy(); agingChart = null; }
-      if (values.every(v => v === 0)) {
-        agingChart = new Chart(agingCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
+  function updateEarmarkedKPIs() {
+    const total = fullData.reduce((s,r) => s + r.Earmarked, 0);
+    document.getElementById('kpi-full-total').textContent = '₱ ' + formatCurrency(total);
+    document.getElementById('kpi-full-items').textContent = fullData.length;
+    document.getElementById('kpi-full-components').textContent = new Set(fullData.map(r => r.Component).filter(Boolean)).size;
+    const latest = fullData.filter(r => r._prDateObj).sort((a,b) => b._prDateObj - a._prDateObj)[0];
+    document.getElementById('kpi-full-latest').textContent = latest ? formatDate(latest._prDateObj) : '—';
+    const agingTotal = fullData.filter(r => { const age = r._prDateObj ? daysBetween(r._prDateObj, TODAY) : null; return age !== null && age > 60; }).reduce((s,r) => s + r.Earmarked, 0);
+    document.getElementById('kpi-full-aging').textContent = '₱ ' + formatCurrency(agingTotal);
+    const oldest = fullData.filter(r => r._prDateObj).sort((a,b) => a._prDateObj - b._prDateObj)[0];
+    const oldestDays = oldest ? daysBetween(oldest._prDateObj, TODAY) : null;
+    document.getElementById('kpi-full-oldest').textContent = oldestDays !== null ? oldestDays + ' days' : '—';
+
+    const fTotal = filteredData.reduce((s,r) => s + r.Earmarked, 0);
+    document.getElementById('kpi-filtered-total').textContent = '₱ ' + formatCurrency(fTotal);
+    document.getElementById('kpi-filtered-items').textContent = filteredData.length;
+    document.getElementById('kpi-filtered-components').textContent = new Set(filteredData.map(r => r.Component).filter(Boolean)).size;
+    const fLatest = filteredData.filter(r => r._prDateObj).sort((a,b) => b._prDateObj - a._prDateObj)[0];
+    document.getElementById('kpi-filtered-latest').textContent = fLatest ? formatDate(fLatest._prDateObj) : '—';
+    const fAgingTotal = filteredData.filter(r => { const age = r._prDateObj ? daysBetween(r._prDateObj, TODAY) : null; return age !== null && age > 60; }).reduce((s,r) => s + r.Earmarked, 0);
+    document.getElementById('kpi-filtered-aging').textContent = '₱ ' + formatCurrency(fAgingTotal);
+    const fOldest = filteredData.filter(r => r._prDateObj).sort((a,b) => a._prDateObj - b._prDateObj)[0];
+    const fOldestDays = fOldest ? daysBetween(fOldest._prDateObj, TODAY) : null;
+    document.getElementById('kpi-filtered-oldest').textContent = fOldestDays !== null ? fOldestDays + ' days' : '—';
+  }
+
+  function updateEarmarkedCharts() {
+    const monthlyData = new Array(12).fill(0);
+    filteredData.forEach(row => {
+      if (row._prDateObj) {
+        const month = row._prDateObj.getMonth();
+        monthlyData[month] += row.Earmarked;
       }
-      agingChart = new Chart(agingCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Earmarked (PHP)', data: values, backgroundColor: colors, borderRadius: 4, barPercentage: 0.6 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateBarChart() {
-      const map = new Map();
-      filteredData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        const val = parseFloat(row.Earmarked) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (barChart) { barChart.destroy(); barChart = null; }
-      if (labels.length === 0) {
-        barChart = new Chart(barCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#2a7faa','#4a9bc7','#6fb3d6','#96cbe3','#b8dced','#1f5f82','#3a7fa3','#5d9fc7'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      barChart = new Chart(barCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Earmarked (PHP)', data: values, backgroundColor: bgColors, borderRadius: 5, barPercentage: 0.65 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateAsaChart() {
-      const map = new Map();
-      filteredData.forEach(row => {
-        const key = row.ASASheet || 'Uncategorized';
-        const val = parseFloat(row.Earmarked) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (asaChart) { asaChart.destroy(); asaChart = null; }
-      if (labels.length === 0) {
-        asaChart = new Chart(asaCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e74c3c','#34495e'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      asaChart = new Chart(asaCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Earmarked (PHP)', data: values, backgroundColor: bgColors, borderRadius: 5, barPercentage: 0.65 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateCategoryChart() {
-      const map = new Map();
-      filteredData.forEach(row => {
-        const key = row.Category || 'Uncategorized';
-        const val = parseFloat(row.Earmarked) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (categoryChart) { categoryChart.destroy(); categoryChart = null; }
-      if (labels.length === 0) {
-        categoryChart = new Chart(categoryCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#27ae60','#2ecc71','#1abc9c','#16a085','#2980b9','#3498db','#8e44ad','#9b59b6'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      categoryChart = new Chart(categoryCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Earmarked (PHP)', data: values, backgroundColor: bgColors, borderRadius: 5, barPercentage: 0.65 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    // ================================================================
-    // EARMARKED - Render
-    // ================================================================
-    function renderEarmarkedTable() {
-      const filteredWithAge = computeAgingStats(filteredData);
-      if (filteredWithAge.length === 0) {
-        tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${fullData.length === 0 ? '⬆️ Upload Excel file' : 'No matching records'}</td></tr>`;
-      } else {
-        let html = '';
-        filteredWithAge.forEach(row => {
-          const prDate = row._prDateObj ? formatDate(row._prDateObj) : '';
-          let rowClass = '', ageBadge = '';
-          if (row._ageDays !== null) {
-            if (row._ageDays > 90) {
-              rowClass = 'highlight-old';
-              ageBadge = `<span class="badge badge-danger">${row._ageDays} days</span>`;
-            } else if (row._ageDays > 60) {
-              rowClass = 'highlight-old';
-              ageBadge = `<span class="badge badge-warning">${row._ageDays} days</span>`;
-            } else {
-              ageBadge = `<span class="badge badge-success">${row._ageDays} days</span>`;
+    });
+    
+    if (trendChart) { trendChart.destroy(); }
+    trendChart = new Chart(document.getElementById('trendChart'), {
+      type: 'line',
+      data: { 
+        labels: MONTH_NAMES, 
+        datasets: [{ 
+          label: 'Earmarked (₱)', 
+          data: monthlyData, 
+          borderColor: '#2a7faa', 
+          backgroundColor: 'rgba(42, 127, 170, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: '#2a7faa',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }] 
+      },
+      options: { 
+        responsive: true, 
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return '₱ ' + formatCurrency(context.parsed.y);
+              }
             }
           }
-          html += `<tr class="${rowClass}">
-            <td><span class="badge" style="background:#d6e6f5;">${row.Component || ''}</span></td>
-            <td>${row.Category || ''}</td>
-            <td>${row.ASASheet || ''}</td>
-            <td>${prDate}</td>
-            <td>${row.PRNo || ''}</td>
-            <td style="max-width:220px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${row.Particulars || ''}</td>
-            <td style="text-align:right; font-weight:500;">₱ ${formatCurrency(row.Earmarked)}</td>
-            <td style="text-align:center;">${ageBadge}</td>
-          </tr>`;
-        });
-        tbody.innerHTML = html;
-      }
-    }
-
-    function renderEarmarked() {
-      const searchTerm = searchInput.value.toLowerCase().trim();
-      const compVal = compFilter.value, catVal = catFilter.value, asaVal = asaFilter.value;
-      const monthVal = monthFilter.value, agingVal = agingFilter.value;
-
-      let tempData = fullData.filter(row => {
-        const matchSearch = !searchTerm || (row.Particulars && row.Particulars.toLowerCase().includes(searchTerm));
-        const matchComp = !compVal || row.Component === compVal;
-        const matchCat = !catVal || row.Category === catVal;
-        const matchAsa = !asaVal || row.ASASheet === asaVal;
-        let matchMonth = true;
-        if (monthVal !== '') {
-          const month = row._prDateObj ? getMonth(row._prDateObj) : null;
-          matchMonth = month !== null && month === parseInt(monthVal);
-        }
-        return matchSearch && matchComp && matchCat && matchAsa && matchMonth;
-      });
-
-      if (agingVal && agingVal !== '') {
-        tempData = tempData.filter(row => {
-          const age = row._prDateObj ? daysBetween(row._prDateObj, TODAY) : null;
-          if (age === null) return false;
-          if (agingVal === '0-30') return age <= 30;
-          if (agingVal === '31-60') return age > 30 && age <= 60;
-          if (agingVal === '61-90') return age > 60 && age <= 90;
-          if (agingVal === '90+') return age > 90;
-          return true;
-        });
-      }
-      filteredData = tempData;
-
-      if (sortConfig.col !== null) {
-        const colKey = ['Component','Category','ASASheet','PRDate','PRNo','Particulars','Earmarked','_ageDays'][sortConfig.col];
-        filteredData.sort((a,b) => {
-          let va = a[colKey] ?? '', vb = b[colKey] ?? '';
-          if (colKey === 'Earmarked') { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
-          else if (colKey === 'PRDate') { va = a._prDateObj || new Date(0); vb = b._prDateObj || new Date(0); }
-          else if (colKey === '_ageDays') { va = a._ageDays !== null ? a._ageDays : -1; vb = b._ageDays !== null ? b._ageDays : -1; }
-          else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
-          if (va < vb) return sortConfig.asc ? -1 : 1;
-          if (va > vb) return sortConfig.asc ? 1 : -1;
-          return 0;
-        });
-      }
-      renderEarmarkedTable();
-      updateEarmarkedKPIs();
-      updateEarmarkedCharts();
-    }
-
-    // ================================================================
-    // EARMARKED - Export
-    // ================================================================
-    function exportEarmarkedToExcel() {
-      if (filteredData.length === 0) { alert('No data to export.'); return; }
-      const exportRows = filteredData.map(row => {
-        const age = row._prDateObj ? daysBetween(row._prDateObj, TODAY) : null;
-        return {
-          'Component': row.Component || '', 'Category': row.Category || '', 'ASA Sheet': row.ASASheet || '',
-          'PR Date': row._prDateObj ? formatDate(row._prDateObj) : '', 'PR No.': row.PRNo || '',
-          'Particulars': row.Particulars || '', 'Earmarked (₱)': parseFloat(row.Earmarked) || 0,
-          'Age (days)': age !== null ? age : ''
-        };
-      });
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportRows);
-      ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 25 }, { wch: 15 }, { wch: 12 }, { wch: 60 }, { wch: 18 }, { wch: 12 }];
-      XLSX.utils.book_append_sheet(wb, ws, 'Earmarked Data');
-      XLSX.writeFile(wb, `PRDP_RPCO1_Earmarked_Data_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
-    // ================================================================
-    // EARMARKED - Event Listeners
-    // ================================================================
-    searchInput.addEventListener('input', renderEarmarked);
-    compFilter.addEventListener('change', renderEarmarked);
-    catFilter.addEventListener('change', renderEarmarked);
-    asaFilter.addEventListener('change', renderEarmarked);
-    monthFilter.addEventListener('change', renderEarmarked);
-    agingFilter.addEventListener('change', renderEarmarked);
-    resetBtn.addEventListener('click', function() {
-      searchInput.value = ''; compFilter.value = ''; catFilter.value = '';
-      asaFilter.value = ''; monthFilter.value = ''; agingFilter.value = '';
-      sortConfig = { col: null, asc: true };
-      renderEarmarked();
-    });
-    exportBtn.addEventListener('click', exportEarmarkedToExcel);
-    thead.addEventListener('click', function(e) {
-      const th = e.target.closest('th');
-      if (!th) return;
-      const col = parseInt(th.dataset.col);
-      if (isNaN(col)) return;
-      if (sortConfig.col === col) { sortConfig.asc = !sortConfig.asc; } else { sortConfig.col = col; sortConfig.asc = true; }
-      renderEarmarked();
-    });
-
-    // ================================================================
-    // BALANCES - Helpers
-    // ================================================================
-    function parseBalanceNumber(val) {
-      if (val === undefined || val === null || val === '') return 0;
-      if (typeof val === 'number') return val;
-      if (typeof val === 'string') {
-        const cleaned = val.replace(/[₱,]/g, '').trim();
-        return parseFloat(cleaned) || 0;
-      }
-      return 0;
-    }
-
-    // ================================================================
-    // BALANCES - KPIs
-    // ================================================================
-    const kpiBalTotal = document.getElementById('kpi-bal-total');
-    const kpiBalAlloc = document.getElementById('kpi-bal-alloc');
-    const kpiBalUtil = document.getElementById('kpi-bal-util');
-    const kpiBalRatio = document.getElementById('kpi-bal-ratio');
-    const kpiBalLowUtil = document.getElementById('kpi-bal-lowutil');
-    const kpiBalLargest = document.getElementById('kpi-bal-largest');
-    const kpiBalFiltTotal = document.getElementById('kpi-bal-filt-total');
-    const kpiBalFiltAlloc = document.getElementById('kpi-bal-filt-alloc');
-    const kpiBalFiltUtil = document.getElementById('kpi-bal-filt-util');
-    const kpiBalFiltRatio = document.getElementById('kpi-bal-filt-ratio');
-    const kpiBalFiltLowUtil = document.getElementById('kpi-bal-filt-lowutil');
-    const kpiBalFiltLargest = document.getElementById('kpi-bal-filt-largest');
-
-    function updateBalancesKPIs() {
-      // Full
-      const totalBal = balFullData.reduce((sum, r) => sum + (parseFloat(r.Balance) || 0), 0);
-      const totalAlloc = balFullData.reduce((sum, r) => sum + (parseFloat(r.Allocation) || 0), 0);
-      const totalOblig = balFullData.reduce((sum, r) => sum + (parseFloat(r.Obligation) || 0), 0);
-      const utilRate = totalAlloc > 0 ? (totalOblig / totalAlloc) * 100 : 0;
-      const balRatio = totalAlloc > 0 ? (totalBal / totalAlloc) * 100 : 0;
-      const largestBal = balFullData.length > 0 ? Math.max(...balFullData.map(r => parseFloat(r.Balance) || 0)) : 0;
-      
-      const compMap = new Map();
-      balFullData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        if (!compMap.has(key)) compMap.set(key, { alloc: 0, oblig: 0 });
-        const d = compMap.get(key);
-        d.alloc += parseFloat(row.Allocation) || 0;
-        d.oblig += parseFloat(row.Obligation) || 0;
-      });
-      let lowUtilCount = 0;
-      compMap.forEach((d, key) => {
-        const util = d.alloc > 0 ? (d.oblig / d.alloc) * 100 : 0;
-        if (util < 50 && d.alloc > 0) lowUtilCount++;
-      });
-
-      kpiBalTotal.textContent = '₱ ' + formatCurrency(totalBal);
-      kpiBalAlloc.textContent = '₱ ' + formatCurrency(totalAlloc);
-      kpiBalUtil.textContent = utilRate.toFixed(1) + '%';
-      kpiBalRatio.textContent = balRatio.toFixed(1) + '%';
-      kpiBalLowUtil.textContent = lowUtilCount;
-      kpiBalLargest.textContent = '₱ ' + formatCurrency(largestBal);
-
-      // Filtered
-      const filtTotalBal = balFilteredData.reduce((sum, r) => sum + (parseFloat(r.Balance) || 0), 0);
-      const filtTotalAlloc = balFilteredData.reduce((sum, r) => sum + (parseFloat(r.Allocation) || 0), 0);
-      const filtTotalOblig = balFilteredData.reduce((sum, r) => sum + (parseFloat(r.Obligation) || 0), 0);
-      const filtUtilRate = filtTotalAlloc > 0 ? (filtTotalOblig / filtTotalAlloc) * 100 : 0;
-      const filtBalRatio = filtTotalAlloc > 0 ? (filtTotalBal / filtTotalAlloc) * 100 : 0;
-      const filtLargestBal = balFilteredData.length > 0 ? Math.max(...balFilteredData.map(r => parseFloat(r.Balance) || 0)) : 0;
-      
-      const filtCompMap = new Map();
-      balFilteredData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        if (!filtCompMap.has(key)) filtCompMap.set(key, { alloc: 0, oblig: 0 });
-        const d = filtCompMap.get(key);
-        d.alloc += parseFloat(row.Allocation) || 0;
-        d.oblig += parseFloat(row.Obligation) || 0;
-      });
-      let filtLowUtilCount = 0;
-      filtCompMap.forEach((d, key) => {
-        const util = d.alloc > 0 ? (d.oblig / d.alloc) * 100 : 0;
-        if (util < 50 && d.alloc > 0) filtLowUtilCount++;
-      });
-
-      kpiBalFiltTotal.textContent = '₱ ' + formatCurrency(filtTotalBal);
-      kpiBalFiltAlloc.textContent = '₱ ' + formatCurrency(filtTotalAlloc);
-      kpiBalFiltUtil.textContent = filtUtilRate.toFixed(1) + '%';
-      kpiBalFiltRatio.textContent = filtBalRatio.toFixed(1) + '%';
-      kpiBalFiltLowUtil.textContent = filtLowUtilCount;
-      kpiBalFiltLargest.textContent = '₱ ' + formatCurrency(filtLargestBal);
-
-      balRowCounter.textContent = balFilteredData.length + ' rows';
-      balExportBtn.disabled = balFilteredData.length === 0;
-    }
-
-    // ================================================================
-    // BALANCES - Performance Charts
-    // ================================================================
-    const balAllocVsBalanceCanvas = document.getElementById('balAllocVsBalanceChart');
-    const balGaugeCanvas = document.getElementById('balGaugeChart');
-    const balLowUtilCanvas = document.getElementById('balLowUtilChart');
-    const balCompCanvas = document.getElementById('balCompChart');
-    const balCatCanvas = document.getElementById('balCatChart');
-    const balAsaCanvas = document.getElementById('balAsaChart');
-    const balTopCanvas = document.getElementById('balTopChart');
-    const balDonutCanvas = document.getElementById('balDonutChart');
-
-    function updateBalAllocVsBalanceChart() {
-      const compMap = new Map();
-      balFilteredData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        if (!compMap.has(key)) compMap.set(key, { alloc: 0, bal: 0 });
-        const d = compMap.get(key);
-        d.alloc += parseFloat(row.Allocation) || 0;
-        d.bal += parseFloat(row.Balance) || 0;
-      });
-      const sorted = Array.from(compMap.entries()).sort((a, b) => b[1].alloc - a[1].alloc);
-      const labels = sorted.map(item => item[0]);
-      const allocs = sorted.map(item => item[1].alloc);
-      const bals = sorted.map(item => item[1].bal);
-
-      if (balAllocVsBalanceChart) { balAllocVsBalanceChart.destroy(); balAllocVsBalanceChart = null; }
-      if (labels.length === 0) {
-        balAllocVsBalanceChart = new Chart(balAllocVsBalanceCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
-        });
-        return;
-      }
-      
-      // Horizontal bar chart - much easier to read
-      balAllocVsBalanceChart = new Chart(balAllocVsBalanceCanvas, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [
-            { label: 'Allocation', data: allocs, backgroundColor: '#2a7faa', borderRadius: 4, barPercentage: 0.7 },
-            { label: 'Balance', data: bals, backgroundColor: '#e67e22', borderRadius: 4, barPercentage: 0.7 }
-          ]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: { 
-            legend: { position: 'top', labels: { boxWidth: 12, font: { size: 9 } } },
-            tooltip: {
-              callbacks: {
-                label: function(context) {
-                  return context.dataset.label + ': ₱ ' + formatCurrency(context.parsed.x);
-                }
+        }, 
+        scales: { 
+          y: { 
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '₱' + (value / 1000000).toFixed(1) + 'M';
               }
             }
           },
-          scales: { 
-            x: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } },
-            y: { ticks: { font: { size: 9 } } }
-          }
-        }
-      });
-    }
-
-    function updateBalGaugeChart() {
-      const totalAlloc = balFilteredData.reduce((sum, r) => sum + (parseFloat(r.Allocation) || 0), 0);
-      const totalOblig = balFilteredData.reduce((sum, r) => sum + (parseFloat(r.Obligation) || 0), 0);
-      const totalBal = balFilteredData.reduce((sum, r) => sum + (parseFloat(r.Balance) || 0), 0);
-      const utilRate = totalAlloc > 0 ? (totalOblig / totalAlloc) * 100 : 0;
-      const remaining = 100 - utilRate;
-
-      if (balGaugeChart) { balGaugeChart.destroy(); balGaugeChart = null; }
-      
-      const color = utilRate > 80 ? '#27ae60' : utilRate > 50 ? '#f1c40f' : '#e74c3c';
-      
-      // Center text plugin for showing amounts
-      const centerText = {
-        id: 'centerText',
-        beforeDraw: function(chart) {
-          const { width, height, ctx } = chart;
-          ctx.save();
-          const centerX = width / 2;
-          const centerY = height / 2 - 10;
-          
-          // Show percentage
-          ctx.font = 'bold 28px sans-serif';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillStyle = '#0b2b4a';
-          ctx.fillText(utilRate.toFixed(0) + '%', centerX, centerY - 6);
-          
-          // Show amounts
-          ctx.font = '11px sans-serif';
-          ctx.fillStyle = '#2f5b7a';
-          ctx.fillText('Utilized: ₱' + formatCurrency(totalOblig), centerX, centerY + 28);
-          ctx.fillText('Remaining: ₱' + formatCurrency(totalBal), centerX, centerY + 44);
-          
-          ctx.restore();
-        }
-      };
-
-      balGaugeChart = new Chart(balGaugeCanvas, {
-        type: 'doughnut',
-        data: {
-          labels: [`Utilized ${utilRate.toFixed(1)}%`, `Remaining ${remaining.toFixed(1)}%`],
-          datasets: [{
-            data: [utilRate, Math.max(0, remaining)],
-            backgroundColor: [color, '#e8ecf0'],
-            borderWidth: 0,
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: true,
-          cutout: '72%',
-          plugins: {
-            legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } },
-            tooltip: { 
-              callbacks: { 
-                label: function(context) {
-                  const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                  const value = context.parsed;
-                  return context.label + ' (₱' + formatCurrency((value / 100) * totalAlloc) + ')';
-                }
-              } 
+          x: {
+            grid: {
+              display: false
             }
           }
-        },
-        plugins: [centerText]
+        } 
+      }
+    });
+
+    const agingBuckets = { '0-30':0, '31-60':0, '61-90':0, '90+':0 };
+    filteredData.forEach(row => {
+      const age = row._prDateObj ? daysBetween(row._prDateObj, TODAY) : null;
+      if (age !== null) {
+        const bucket = getAgingBucket(age);
+        agingBuckets[bucket] += row.Earmarked;
+      }
+    });
+    if (agingChart) { agingChart.destroy(); }
+    agingChart = new Chart(document.getElementById('agingChart'), {
+      type: 'bar',
+      data: { labels: ['0-30','31-60','61-90','90+'], datasets: [{ label: 'Earmarked (₱)', data: [agingBuckets['0-30'],agingBuckets['31-60'],agingBuckets['61-90'],agingBuckets['90+']], backgroundColor: ['#27ae60','#f1c40f','#e67e22','#e74c3c'] }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const compMap = {};
+    filteredData.forEach(r => { compMap[r.Component] = (compMap[r.Component] || 0) + r.Earmarked; });
+    const compLabels = Object.keys(compMap).filter(k => k);
+    const compData = compLabels.map(k => compMap[k]);
+    if (barChart) { barChart.destroy(); }
+    barChart = new Chart(document.getElementById('barChart'), {
+      type: 'bar',
+      data: { labels: compLabels, datasets: [{ label: 'Earmarked', data: compData, backgroundColor: '#2a7faa' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const asaMap = {};
+    filteredData.forEach(r => { asaMap[r.ASASheet] = (asaMap[r.ASASheet] || 0) + r.Earmarked; });
+    const asaLabels = Object.keys(asaMap).filter(k => k);
+    const asaData = asaLabels.map(k => asaMap[k]);
+    if (asaChart) { asaChart.destroy(); }
+    asaChart = new Chart(document.getElementById('asaChart'), {
+      type: 'bar',
+      data: { labels: asaLabels, datasets: [{ label: 'Earmarked', data: asaData, backgroundColor: '#8e44ad' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const catMap = {};
+    filteredData.forEach(r => { catMap[r.Category] = (catMap[r.Category] || 0) + r.Earmarked; });
+    const catLabels = Object.keys(catMap).filter(k => k);
+    const catData = catLabels.map(k => catMap[k]);
+    if (categoryChart) { categoryChart.destroy(); }
+    categoryChart = new Chart(document.getElementById('categoryChart'), {
+      type: 'bar',
+      data: { labels: catLabels, datasets: [{ label: 'Earmarked', data: catData, backgroundColor: '#2980b9' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  searchInput.addEventListener('input', renderEarmarked);
+  compFilter.addEventListener('change', renderEarmarked);
+  catFilter.addEventListener('change', renderEarmarked);
+  asaFilter.addEventListener('change', renderEarmarked);
+  monthFilter.addEventListener('change', renderEarmarked);
+  agingFilter.addEventListener('change', renderEarmarked);
+  resetBtn.addEventListener('click', function() {
+    searchInput.value = ''; compFilter.value = ''; catFilter.value = ''; asaFilter.value = ''; monthFilter.value = ''; agingFilter.value = '';
+    sortConfig = { col: null, asc: true };
+    renderEarmarked();
+  });
+  exportBtn.addEventListener('click', function() {
+    if (filteredData.length === 0) return;
+    const rows = filteredData.map(r => ({ Component: r.Component, Category: r.Category, 'ASA Sheet': r.ASASheet, 'PR Date': r._prDateObj ? formatDate(r._prDateObj) : '', 'PR No.': r.PRNo, Particulars: r.Particulars, 'Earmarked (₱)': r.Earmarked }));
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:20},{wch:25},{wch:20},{wch:15},{wch:15},{wch:40},{wch:18}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Earmarked');
+    XLSX.writeFile(wb, `PRDP_Earmarked_${new Date().toISOString().slice(0,10)}.xlsx`);
+  });
+  thead.addEventListener('click', function(e) {
+    const th = e.target.closest('th'); if (!th) return;
+    const col = parseInt(th.dataset.col); if (isNaN(col)) return;
+    if (sortConfig.col === col) sortConfig.asc = !sortConfig.asc; else { sortConfig.col = col; sortConfig.asc = true; }
+    renderEarmarked();
+  });
+
+  // ================================================================
+  // BALANCES (simplified)
+  // ================================================================
+  const balTbody = document.getElementById('bal-table-body');
+  const balThead = document.getElementById('bal-table-head');
+  const balSearchInput = document.getElementById('bal-search-input');
+  const balCompFilter = document.getElementById('bal-component-filter');
+  const balCatFilter = document.getElementById('bal-category-filter');
+  const balAsaFilter = document.getElementById('bal-asa-filter');
+  const balMinBalance = document.getElementById('bal-min-balance');
+  const balResetBtn = document.getElementById('bal-reset-filters');
+  const balExportBtn = document.getElementById('bal-export-btn');
+  const balRowCounter = document.getElementById('bal-row-counter');
+
+  function loadBalancesData(workbook) {
+    const sheet = workbook.Sheets['Balance Collector'];
+    if (!sheet) { console.warn('Balance sheet not found.'); return; }
+    const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
+    if (!json || json.length === 0) return;
+    const headers = Object.keys(json[0]);
+    const findCol = (patterns) => {
+      for (const p of patterns) {
+        const found = headers.find(h => h.toLowerCase().includes(p.toLowerCase()));
+        if (found) return found;
+      }
+      return null;
+    };
+    const colComponent = findCol(['component']);
+    const colCategory = findCol(['category']);
+    const colASASheet = findCol(['asa sheet', 'asa']);
+    const colParticulars = findCol(['particulars', 'description']);
+    const colAllocation = findCol(['allocation']);
+    const colBalance = findCol(['balance']);
+    balFullData = json.map(row => ({
+      Component: colComponent ? String(row[colComponent] ?? '').trim() : '',
+      Category: colCategory ? String(row[colCategory] ?? '').trim() : '',
+      ASASheet: colASASheet ? String(row[colASASheet] ?? '').trim() : '',
+      Particulars: colParticulars ? String(row[colParticulars] ?? '').trim() : '',
+      Allocation: colAllocation ? parseNumber(row[colAllocation]) : 0,
+      Balance: colBalance ? parseNumber(row[colBalance]) : 0,
+    })).filter(r => r.Allocation > 0 || r.Balance > 0);
+    
+    if (balFullData.length === 0) {
+      console.warn('No balance data loaded');
+      return;
+    }
+    
+    const comps = [...new Set(balFullData.map(r => r.Component).filter(Boolean))];
+    const cats = [...new Set(balFullData.map(r => r.Category).filter(Boolean))];
+    const asas = [...new Set(balFullData.map(r => r.ASASheet).filter(Boolean))];
+    balCompFilter.innerHTML = '<option value="">All Components</option>' + comps.map(c => `<option value="${c}">${c}</option>`).join('');
+    balCatFilter.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    balAsaFilter.innerHTML = '<option value="">All ASA</option>' + asas.map(a => `<option value="${a}">${a}</option>`).join('');
+    balSortConfig = { col: null, asc: true };
+    renderBalances();
+  }
+
+  function renderBalances() {
+    const searchTerm = balSearchInput.value.toLowerCase().trim();
+    const compVal = balCompFilter.value, catVal = balCatFilter.value, asaVal = balAsaFilter.value;
+    const minBal = balMinBalance.value;
+    let temp = balFullData.filter(row => {
+      const matchSearch = !searchTerm || (row.Particulars && row.Particulars.toLowerCase().includes(searchTerm));
+      const matchComp = !compVal || row.Component === compVal;
+      const matchCat = !catVal || row.Category === catVal;
+      const matchAsa = !asaVal || row.ASASheet === asaVal;
+      let matchMin = true;
+      if (minBal !== '') matchMin = row.Balance >= parseFloat(minBal);
+      return matchSearch && matchComp && matchCat && matchAsa && matchMin;
+    });
+    balFilteredData = temp;
+    if (balSortConfig.col !== null) {
+      const colKey = ['Component','Category','ASASheet','Particulars','Allocation','Balance','Utilization Rate'];
+      const key = colKey[balSortConfig.col];
+      balFilteredData.sort((a,b) => {
+        let va = a[key] ?? '', vb = b[key] ?? '';
+        if (['Allocation','Balance'].includes(key)) { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+        else if (key === 'Utilization Rate') { va = a.Allocation > 0 ? (a.Allocation - a.Balance) / a.Allocation : 0; vb = b.Allocation > 0 ? (b.Allocation - b.Balance) / b.Allocation : 0; }
+        else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+        if (va < vb) return balSortConfig.asc ? -1 : 1;
+        if (va > vb) return balSortConfig.asc ? 1 : -1;
+        return 0;
       });
     }
+    renderBalTable();
+    updateBalKPIs();
+    updateBalCharts();
+  }
 
-    function updateBalLowUtilChart() {
-      const compMap = new Map();
+  function renderBalTable() {
+    if (balFilteredData.length === 0) {
+      balTbody.innerHTML = `<tr><td colspan="7" class="empty-state">${balFullData.length === 0 ? '⬆️ Upload Excel file' : 'No matching records'}</td></tr>`;
+    } else {
+      let html = '';
       balFilteredData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        if (!compMap.has(key)) compMap.set(key, { alloc: 0, oblig: 0, bal: 0 });
-        const d = compMap.get(key);
-        d.alloc += parseFloat(row.Allocation) || 0;
-        d.oblig += parseFloat(row.Obligation) || 0;
-        d.bal += parseFloat(row.Balance) || 0;
+        const util = row.Allocation > 0 ? ((row.Allocation - row.Balance) / row.Allocation * 100) : 0;
+        html += `<tr>
+          <td><span class="badge">${row.Component || ''}</span></td>
+          <td>${row.Category || ''}</td>
+          <td>${row.ASASheet || ''}</td>
+          <td>${row.Particulars || ''}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.Allocation)}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.Balance)}</td>
+          <td style="text-align:center;"><span class="badge ${util < 50 ? 'badge-warning' : 'badge-success'}">${util.toFixed(1)}%</span></td>
+        </tr>`;
       });
-      
-      const lowUtil = [];
-      compMap.forEach((d, key) => {
-        const util = d.alloc > 0 ? (d.oblig / d.alloc) * 100 : 0;
-        if (util < 50 && d.alloc > 0) {
-          lowUtil.push({ component: key, util: util, alloc: d.alloc, bal: d.bal });
-        }
-      });
-      lowUtil.sort((a, b) => a.util - b.util);
+      balTbody.innerHTML = html;
+    }
+    balRowCounter.textContent = balFilteredData.length + ' rows';
+    balExportBtn.disabled = balFilteredData.length === 0;
+  }
 
-      if (balLowUtilChart) { balLowUtilChart.destroy(); balLowUtilChart = null; }
-      if (lowUtil.length === 0) {
-        balLowUtilChart = new Chart(balLowUtilCanvas, {
-          type: 'bar',
-          data: { labels: ['✅ No low utilization components'], datasets: [{ data: [0], backgroundColor: '#27ae60' }] },
-          options: { plugins: { legend: { display: false } }, indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100 } } }
-        });
-        return;
+  function updateBalKPIs() {
+    const totalBal = balFullData.reduce((s,r) => s + r.Balance, 0);
+    const totalAlloc = balFullData.reduce((s,r) => s + r.Allocation, 0);
+    document.getElementById('kpi-bal-total').textContent = '₱ ' + formatCurrency(totalBal);
+    document.getElementById('kpi-bal-alloc').textContent = '₱ ' + formatCurrency(totalAlloc);
+    const util = totalAlloc > 0 ? ((totalAlloc - totalBal) / totalAlloc * 100) : 0;
+    document.getElementById('kpi-bal-util').textContent = util.toFixed(1) + '%';
+    document.getElementById('kpi-bal-ratio').textContent = totalAlloc > 0 ? ((totalBal / totalAlloc) * 100).toFixed(1) + '%' : '—';
+    const lowUtil = balFullData.filter(r => r.Allocation > 0 && ((r.Allocation - r.Balance) / r.Allocation) < 0.5).length;
+    document.getElementById('kpi-bal-lowutil').textContent = lowUtil;
+    const largest = balFullData.reduce((max, r) => r.Balance > max ? r.Balance : max, 0);
+    document.getElementById('kpi-bal-largest').textContent = '₱ ' + formatCurrency(largest);
+
+    const fBal = balFilteredData.reduce((s,r) => s + r.Balance, 0);
+    const fAlloc = balFilteredData.reduce((s,r) => s + r.Allocation, 0);
+    document.getElementById('kpi-bal-filt-total').textContent = '₱ ' + formatCurrency(fBal);
+    document.getElementById('kpi-bal-filt-alloc').textContent = '₱ ' + formatCurrency(fAlloc);
+    const fUtil = fAlloc > 0 ? ((fAlloc - fBal) / fAlloc * 100) : 0;
+    document.getElementById('kpi-bal-filt-util').textContent = fUtil.toFixed(1) + '%';
+    document.getElementById('kpi-bal-filt-ratio').textContent = fAlloc > 0 ? ((fBal / fAlloc) * 100).toFixed(1) + '%' : '—';
+    const fLowUtil = balFilteredData.filter(r => r.Allocation > 0 && ((r.Allocation - r.Balance) / r.Allocation) < 0.5).length;
+    document.getElementById('kpi-bal-filt-lowutil').textContent = fLowUtil;
+    const fLargest = balFilteredData.reduce((max, r) => r.Balance > max ? r.Balance : max, 0);
+    document.getElementById('kpi-bal-filt-largest').textContent = '₱ ' + formatCurrency(fLargest);
+  }
+
+  function updateBalCharts() {
+    const compMap = {};
+    balFilteredData.forEach(r => { compMap[r.Component] = (compMap[r.Component] || 0) + r.Balance; });
+    const compLabels = Object.keys(compMap).filter(k => k);
+    const compData = compLabels.map(k => compMap[k]);
+    if (balCompChart) { balCompChart.destroy(); }
+    balCompChart = new Chart(document.getElementById('balCompChart'), {
+      type: 'bar',
+      data: { labels: compLabels, datasets: [{ label: 'Balance', data: compData, backgroundColor: '#27ae60' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const asaMap = {};
+    balFilteredData.forEach(r => { asaMap[r.ASASheet] = (asaMap[r.ASASheet] || 0) + r.Balance; });
+    const asaLabels = Object.keys(asaMap).filter(k => k);
+    const asaData = asaLabels.map(k => asaMap[k]);
+    if (balAsaChart) { balAsaChart.destroy(); }
+    balAsaChart = new Chart(document.getElementById('balAsaChart'), {
+      type: 'bar',
+      data: { labels: asaLabels, datasets: [{ label: 'Balance', data: asaData, backgroundColor: '#8e44ad' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const catMap = {};
+    balFilteredData.forEach(r => { catMap[r.Category] = (catMap[r.Category] || 0) + r.Balance; });
+    const catLabels = Object.keys(catMap).filter(k => k);
+    const catData = catLabels.map(k => catMap[k]);
+    if (balCatChart) { balCatChart.destroy(); }
+    balCatChart = new Chart(document.getElementById('balCatChart'), {
+      type: 'bar',
+      data: { labels: catLabels, datasets: [{ label: 'Balance', data: catData, backgroundColor: '#2980b9' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const sorted = balFilteredData.slice().sort((a,b) => b.Balance - a.Balance).slice(0,10);
+    const topLabels = sorted.map(r => r.Particulars || r.Category || 'Item');
+    const topData = sorted.map(r => r.Balance);
+    if (balTopChart) { balTopChart.destroy(); }
+    balTopChart = new Chart(document.getElementById('balTopChart'), {
+      type: 'bar',
+      data: { labels: topLabels, datasets: [{ label: 'Balance', data: topData, backgroundColor: '#e67e22' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const donutData = {};
+    balFilteredData.forEach(r => { donutData[r.Component || 'Uncategorized'] = (donutData[r.Component || 'Uncategorized'] || 0) + r.Balance; });
+    const donutLabels = Object.keys(donutData);
+    const donutValues = donutLabels.map(k => donutData[k]);
+    if (balDonutChart) { balDonutChart.destroy(); }
+    balDonutChart = new Chart(document.getElementById('balDonutChart'), {
+      type: 'doughnut',
+      data: { labels: donutLabels, datasets: [{ data: donutValues, backgroundColor: ['#2a7faa','#27ae60','#f39c12','#e74c3c','#8e44ad','#1abc9c','#e67e22','#3498db','#9b59b6','#2c3e50'] }] },
+      options: { responsive: true, plugins: { legend: { position: 'right', labels: { boxWidth: 10, font: { size: 8 } } } } }
+    });
+
+    const compAlloc = {}, compBal = {};
+    balFilteredData.forEach(r => { compAlloc[r.Component] = (compAlloc[r.Component] || 0) + r.Allocation; compBal[r.Component] = (compBal[r.Component] || 0) + r.Balance; });
+    const comps = Object.keys(compAlloc);
+    const allocData = comps.map(k => compAlloc[k]);
+    const balData2 = comps.map(k => compBal[k]);
+    if (balAllocVsBalanceChart) { balAllocVsBalanceChart.destroy(); }
+    balAllocVsBalanceChart = new Chart(document.getElementById('balAllocVsBalanceChart'), {
+      type: 'bar',
+      data: { labels: comps, datasets: [{ label: 'Allocation', data: allocData, backgroundColor: '#2a7faa' }, { label: 'Balance', data: balData2, backgroundColor: '#e67e22' }] },
+      options: { responsive: true, plugins: { legend: { position: 'top' } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const totalAlloc = balFilteredData.reduce((s,r) => s + r.Allocation, 0);
+    const totalBal = balFilteredData.reduce((s,r) => s + r.Balance, 0);
+    const utilPct = totalAlloc > 0 ? ((totalAlloc - totalBal) / totalAlloc * 100) : 0;
+    if (balGaugeChart) { balGaugeChart.destroy(); }
+    balGaugeChart = new Chart(document.getElementById('balGaugeChart'), {
+      type: 'doughnut',
+      data: { labels: ['Utilized', 'Unutilized'], datasets: [{ data: [utilPct, 100-utilPct], backgroundColor: ['#27ae60', '#e74c3c'] }] },
+      options: { responsive: true, plugins: { legend: { position: 'bottom' }, tooltip: { callbacks: { label: (ctx) => ctx.parsed + '%' } } }, cutout: '70%' }
+    });
+
+    const lowUtilComps = balFilteredData.filter(r => r.Allocation > 0 && ((r.Allocation - r.Balance) / r.Allocation) < 0.5);
+    const lowMap = {};
+    lowUtilComps.forEach(r => { lowMap[r.Component] = (lowMap[r.Component] || 0) + r.Allocation; });
+    const lowLabels = Object.keys(lowMap);
+    const lowData = lowLabels.map(k => lowMap[k]);
+    if (balLowUtilChart) { balLowUtilChart.destroy(); }
+    balLowUtilChart = new Chart(document.getElementById('balLowUtilChart'), {
+      type: 'bar',
+      data: { labels: lowLabels.length ? lowLabels : ['None'], datasets: [{ label: 'Allocation (Low Utilization)', data: lowLabels.length ? lowData : [0], backgroundColor: '#e74c3c' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  balSearchInput.addEventListener('input', renderBalances);
+  balCompFilter.addEventListener('change', renderBalances);
+  balCatFilter.addEventListener('change', renderBalances);
+  balAsaFilter.addEventListener('change', renderBalances);
+  balMinBalance.addEventListener('change', renderBalances);
+  balResetBtn.addEventListener('click', function() {
+    balSearchInput.value = ''; balCompFilter.value = ''; balCatFilter.value = ''; balAsaFilter.value = ''; balMinBalance.value = '';
+    balSortConfig = { col: null, asc: true };
+    renderBalances();
+  });
+  balExportBtn.addEventListener('click', function() {
+    if (balFilteredData.length === 0) return;
+    const rows = balFilteredData.map(r => ({ Component: r.Component, Category: r.Category, 'ASA Sheet': r.ASASheet, Particulars: r.Particulars, 'Allocation (₱)': r.Allocation, 'Balance (₱)': r.Balance, 'Utilization Rate': r.Allocation > 0 ? ((r.Allocation - r.Balance) / r.Allocation * 100).toFixed(1) + '%' : '0%' }));
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:20},{wch:25},{wch:20},{wch:40},{wch:18},{wch:18},{wch:15}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Balances');
+    XLSX.writeFile(wb, `PRDP_Balances_${new Date().toISOString().slice(0,10)}.xlsx`);
+  });
+  balThead.addEventListener('click', function(e) {
+    const th = e.target.closest('th'); if (!th) return;
+    const col = parseInt(th.dataset.col); if (isNaN(col)) return;
+    if (balSortConfig.col === col) balSortConfig.asc = !balSortConfig.asc; else { balSortConfig.col = col; balSortConfig.asc = true; }
+    renderBalances();
+  });
+
+  // ================================================================
+  // OBLIGATION
+  // ================================================================
+  const oblTbody = document.getElementById('obl-table-body');
+  const oblThead = document.getElementById('obl-table-head');
+  const oblSearchInput = document.getElementById('obl-search-input');
+  const oblCompFilter = document.getElementById('obl-component-filter');
+  const oblCatFilter = document.getElementById('obl-category-filter');
+  const oblAsaFilter = document.getElementById('obl-asa-filter');
+  const oblMinOblig = document.getElementById('obl-min-oblig');
+  const oblResetBtn = document.getElementById('obl-reset-filters');
+  const oblExportBtn = document.getElementById('obl-export-btn');
+  const oblRowCounter = document.getElementById('obl-row-counter');
+
+  function loadObligationData(workbook) {
+    const sheet = workbook.Sheets['Obligation Collector'];
+    if (!sheet) { console.warn('Obligation sheet not found.'); return; }
+    const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
+    if (!json || json.length === 0) return;
+    const headers = Object.keys(json[0]);
+    const findCol = (patterns) => {
+      for (const p of patterns) {
+        const found = headers.find(h => h.toLowerCase().includes(p.toLowerCase()));
+        if (found) return found;
       }
+      return null;
+    };
+    const colComponent = findCol(['component']);
+    const colCategory = findCol(['category']);
+    const colASASheet = findCol(['asa sheet', 'asa']);
+    const colPRDate = findCol(['pr date']);
+    const colPRNo = findCol(['pr no', 'pr number']);
+    const colORSDate = findCol(['ors date']);
+    const colORSNo = findCol(['ors no', 'ors number']);
+    const colParticulars = findCol(['particulars', 'description']);
+    const colActual = findCol(['actual obligation', 'actual']);
+    oblFullData = json.map(row => ({
+      Component: colComponent ? String(row[colComponent] ?? '').trim() : '',
+      Category: colCategory ? String(row[colCategory] ?? '').trim() : '',
+      ASASheet: colASASheet ? String(row[colASASheet] ?? '').trim() : '',
+      PRDate: colPRDate ? parseExcelDate(row[colPRDate]) : null,
+      PRNo: colPRNo ? String(row[colPRNo] ?? '').trim() : '',
+      ORSDate: colORSDate ? parseExcelDate(row[colORSDate]) : null,
+      ORSNo: colORSNo ? String(row[colORSNo] ?? '').trim() : '',
+      Particulars: colParticulars ? String(row[colParticulars] ?? '').trim() : '',
+      ActualObligation: colActual ? parseNumber(row[colActual]) : 0,
+    })).filter(r => r.ActualObligation > 0 || r.Particulars);
+    
+    if (oblFullData.length === 0) {
+      console.warn('No obligation data loaded');
+      return;
+    }
+    
+    const comps = [...new Set(oblFullData.map(r => r.Component).filter(Boolean))];
+    const cats = [...new Set(oblFullData.map(r => r.Category).filter(Boolean))];
+    const asas = [...new Set(oblFullData.map(r => r.ASASheet).filter(Boolean))];
+    oblCompFilter.innerHTML = '<option value="">All Components</option>' + comps.map(c => `<option value="${c}">${c}</option>`).join('');
+    oblCatFilter.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    oblAsaFilter.innerHTML = '<option value="">All ASA</option>' + asas.map(a => `<option value="${a}">${a}</option>`).join('');
+    oblSortConfig = { col: null, asc: true };
+    renderObligation();
+  }
 
-      const labels = lowUtil.map(d => d.component);
-      const values = lowUtil.map(d => d.util);
-      const colors = values.map(v => v < 30 ? '#e74c3c' : '#f1c40f');
-      
-      // Create a custom tooltip to show amounts
-      balLowUtilChart = new Chart(balLowUtilCanvas, {
-        type: 'bar',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: 'Utilization Rate (%)',
-            data: values,
-            backgroundColor: colors,
-            borderRadius: 4,
-            barPercentage: 0.6,
-          }]
-        },
-        options: {
-          indexAxis: 'y',
-          responsive: true,
-          maintainAspectRatio: true,
-          plugins: { 
-            legend: { display: false },
-            tooltip: {
-              callbacks: {
-                afterLabel: function(context) {
-                  const idx = context.dataIndex;
-                  const item = lowUtil[idx];
-                  return 'Allocation: ₱' + formatCurrency(item.alloc) + '\nBalance: ₱' + formatCurrency(item.bal);
-                }
+  function renderObligation() {
+    const searchTerm = oblSearchInput.value.toLowerCase().trim();
+    const compVal = oblCompFilter.value, catVal = oblCatFilter.value, asaVal = oblAsaFilter.value;
+    const minOblig = oblMinOblig.value;
+    let temp = oblFullData.filter(row => {
+      const matchSearch = !searchTerm || (row.Particulars && row.Particulars.toLowerCase().includes(searchTerm));
+      const matchComp = !compVal || row.Component === compVal;
+      const matchCat = !catVal || row.Category === catVal;
+      const matchAsa = !asaVal || row.ASASheet === asaVal;
+      let matchMin = true;
+      if (minOblig !== '') matchMin = row.ActualObligation >= parseFloat(minOblig);
+      return matchSearch && matchComp && matchCat && matchAsa && matchMin;
+    });
+    oblFilteredData = temp;
+    if (oblSortConfig.col !== null) {
+      const colKey = ['Component','Category','ASASheet','PRDate','PRNo','ORSDate','ORSNo','Particulars','ActualObligation'];
+      const key = colKey[oblSortConfig.col];
+      oblFilteredData.sort((a,b) => {
+        let va = a[key] ?? '', vb = b[key] ?? '';
+        if (key === 'ActualObligation') { va = parseFloat(va) || 0; vb = parseFloat(vb) || 0; }
+        else if (key === 'PRDate' || key === 'ORSDate') { va = a[key] ? a[key].getTime() : 0; vb = b[key] ? b[key].getTime() : 0; }
+        else { va = String(va).toLowerCase(); vb = String(vb).toLowerCase(); }
+        if (va < vb) return oblSortConfig.asc ? -1 : 1;
+        if (va > vb) return oblSortConfig.asc ? 1 : -1;
+        return 0;
+      });
+    }
+    renderOblTable();
+    updateOblKPIs();
+    updateOblCharts();
+  }
+
+  function renderOblTable() {
+    if (oblFilteredData.length === 0) {
+      oblTbody.innerHTML = `<tr><td colspan="9" class="empty-state">${oblFullData.length === 0 ? '⬆️ Upload Excel file' : 'No matching records'}</td></tr>`;
+    } else {
+      let html = '';
+      oblFilteredData.forEach(row => {
+        html += `<tr>
+          <td><span class="badge">${row.Component || ''}</span></td>
+          <td>${row.Category || ''}</td>
+          <td>${row.ASASheet || ''}</td>
+          <td>${row.PRDate ? formatDate(row.PRDate) : ''}</td>
+          <td>${row.PRNo || ''}</td>
+          <td>${row.ORSDate ? formatDate(row.ORSDate) : ''}</td>
+          <td>${row.ORSNo || ''}</td>
+          <td>${row.Particulars || ''}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.ActualObligation)}</td>
+        </tr>`;
+      });
+      oblTbody.innerHTML = html;
+    }
+    oblRowCounter.textContent = oblFilteredData.length + ' rows';
+    oblExportBtn.disabled = oblFilteredData.length === 0;
+  }
+
+  function updateOblKPIs() {
+    const total = oblFullData.reduce((s,r) => s + r.ActualObligation, 0);
+    document.getElementById('kpi-obl-total').textContent = '₱ ' + formatCurrency(total);
+    document.getElementById('kpi-obl-items').textContent = oblFullData.length;
+    document.getElementById('kpi-obl-components').textContent = new Set(oblFullData.map(r => r.Component).filter(Boolean)).size;
+    const latest = oblFullData.filter(r => r.ORSDate).sort((a,b) => b.ORSDate - a.ORSDate)[0];
+    document.getElementById('kpi-obl-latest').textContent = latest ? formatDate(latest.ORSDate) : '—';
+    const catMap = {};
+    oblFullData.forEach(r => { catMap[r.Category] = (catMap[r.Category] || 0) + r.ActualObligation; });
+    const topCat = Object.keys(catMap).sort((a,b) => catMap[b] - catMap[a])[0] || '—';
+    document.getElementById('kpi-obl-topcat').textContent = topCat;
+    const largest = oblFullData.reduce((max, r) => r.ActualObligation > max ? r.ActualObligation : max, 0);
+    document.getElementById('kpi-obl-largest').textContent = '₱ ' + formatCurrency(largest);
+
+    const fTotal = oblFilteredData.reduce((s,r) => s + r.ActualObligation, 0);
+    document.getElementById('kpi-obl-filt-total').textContent = '₱ ' + formatCurrency(fTotal);
+    document.getElementById('kpi-obl-filt-items').textContent = oblFilteredData.length;
+    document.getElementById('kpi-obl-filt-components').textContent = new Set(oblFilteredData.map(r => r.Component).filter(Boolean)).size;
+    const fLatest = oblFilteredData.filter(r => r.ORSDate).sort((a,b) => b.ORSDate - a.ORSDate)[0];
+    document.getElementById('kpi-obl-filt-latest').textContent = fLatest ? formatDate(fLatest.ORSDate) : '—';
+    const fCatMap = {};
+    oblFilteredData.forEach(r => { fCatMap[r.Category] = (fCatMap[r.Category] || 0) + r.ActualObligation; });
+    const fTopCat = Object.keys(fCatMap).sort((a,b) => fCatMap[b] - fCatMap[a])[0] || '—';
+    document.getElementById('kpi-obl-filt-topcat').textContent = fTopCat;
+    const fLargest = oblFilteredData.reduce((max, r) => r.ActualObligation > max ? r.ActualObligation : max, 0);
+    document.getElementById('kpi-obl-filt-largest').textContent = '₱ ' + formatCurrency(fLargest);
+  }
+
+  function updateOblCharts() {
+    const monthlyData = new Array(12).fill(0);
+    oblFilteredData.forEach(row => {
+      if (row.ORSDate) {
+        const month = row.ORSDate.getMonth();
+        monthlyData[month] += row.ActualObligation;
+      }
+    });
+    
+    if (oblTrendChart) { oblTrendChart.destroy(); }
+    oblTrendChart = new Chart(document.getElementById('oblTrendChart'), {
+      type: 'line',
+      data: { 
+        labels: MONTH_NAMES, 
+        datasets: [{ 
+          label: 'Obligation (₱)', 
+          data: monthlyData, 
+          borderColor: '#2a7faa', 
+          backgroundColor: 'rgba(42, 127, 170, 0.1)',
+          fill: true,
+          tension: 0.3,
+          pointBackgroundColor: '#2a7faa',
+          pointBorderColor: '#fff',
+          pointBorderWidth: 1,
+          pointRadius: 4,
+          pointHoverRadius: 6
+        }] 
+      },
+      options: { 
+        responsive: true, 
+        plugins: { 
+          legend: { display: false },
+          tooltip: {
+            callbacks: {
+              label: function(context) {
+                return '₱ ' + formatCurrency(context.parsed.y);
+              }
+            }
+          }
+        }, 
+        scales: { 
+          y: { 
+            beginAtZero: true,
+            ticks: {
+              callback: function(value) {
+                return '₱' + (value / 1000000).toFixed(1) + 'M';
               }
             }
           },
-          scales: { 
-            x: { beginAtZero: true, max: 100, ticks: { callback: v => v + '%' } },
-            y: { ticks: { font: { size: 9 } } }
-          }
-        }
-      });
-    }
-
-    // ================================================================
-    // BALANCES - Original Charts
-    // ================================================================
-    function updateBalCompChart() {
-      const map = new Map();
-      balFilteredData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        const val = parseFloat(row.Balance) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (balCompChart) { balCompChart.destroy(); balCompChart = null; }
-      if (labels.length === 0) {
-        balCompChart = new Chart(balCompCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#2a7faa','#4a9bc7','#6fb3d6','#96cbe3','#b8dced'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      balCompChart = new Chart(balCompCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Balance (PHP)', data: values, backgroundColor: bgColors, borderRadius: 5, barPercentage: 0.65 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateBalCatChart() {
-      const map = new Map();
-      balFilteredData.forEach(row => {
-        const key = row.Category || 'Uncategorized';
-        const val = parseFloat(row.Balance) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (balCatChart) { balCatChart.destroy(); balCatChart = null; }
-      if (labels.length === 0) {
-        balCatChart = new Chart(balCatCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#27ae60','#2ecc71','#1abc9c','#16a085','#2980b9','#3498db','#8e44ad','#9b59b6'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      balCatChart = new Chart(balCatCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Balance (PHP)', data: values, backgroundColor: bgColors, borderRadius: 5, barPercentage: 0.65 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateBalAsaChart() {
-      const map = new Map();
-      balFilteredData.forEach(row => {
-        const key = row.ASASheet || 'Uncategorized';
-        const val = parseFloat(row.Balance) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (balAsaChart) { balAsaChart.destroy(); balAsaChart = null; }
-      if (labels.length === 0) {
-        balAsaChart = new Chart(balAsaCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#e74c3c','#34495e'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      balAsaChart = new Chart(balAsaCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Balance (PHP)', data: values, backgroundColor: bgColors, borderRadius: 5, barPercentage: 0.65 }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateBalTopChart() {
-      const sorted = [...balFilteredData].sort((a, b) => (parseFloat(b.Balance) || 0) - (parseFloat(a.Balance) || 0));
-      const top10 = sorted.slice(0, 10);
-      const labels = top10.map(row => {
-        const partic = row.Particulars || 'Unnamed';
-        return partic.length > 25 ? partic.substring(0, 22) + '...' : partic;
-      });
-      const values = top10.map(row => parseFloat(row.Balance) || 0);
-      if (balTopChart) { balTopChart.destroy(); balTopChart = null; }
-      if (labels.length === 0) {
-        balTopChart = new Chart(balTopCanvas, {
-          type: 'bar',
-          data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
-          options: { plugins: { legend: { display: false } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } }
-        });
-        return;
-      }
-      const colorPalette = ['#e74c3c','#e67e22','#f1c40f','#2ecc71','#1abc9c','#3498db','#9b59b6','#34495e','#2a7faa','#4a9bc7'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      balTopChart = new Chart(balTopCanvas, {
-        type: 'bar',
-        data: { labels: labels, datasets: [{ label: 'Balance (PHP)', data: values, backgroundColor: bgColors, borderRadius: 4, barPercentage: 0.7 }] },
-        options: { responsive: true, maintainAspectRatio: true, indexAxis: 'y', plugins: { legend: { display: false } }, scales: { x: { beginAtZero: true, ticks: { callback: v => '₱' + Number(v).toLocaleString() } } } }
-      });
-    }
-
-    function updateBalDonutChart() {
-      const map = new Map();
-      balFilteredData.forEach(row => {
-        const key = row.Component || 'Uncategorized';
-        const val = parseFloat(row.Balance) || 0;
-        map.set(key, (map.get(key) || 0) + val);
-      });
-      const sorted = Array.from(map.entries()).sort((a, b) => b[1] - a[1]);
-      const labels = sorted.map(item => item[0]);
-      const values = sorted.map(item => item[1]);
-      if (balDonutChart) { balDonutChart.destroy(); balDonutChart = null; }
-      if (labels.length === 0) {
-        balDonutChart = new Chart(balDonutCanvas, {
-          type: 'doughnut',
-          data: { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#d1dbe6'] }] },
-          options: { plugins: { legend: { display: false } }, cutout: '50%' }
-        });
-        return;
-      }
-      const colorPalette = ['#2a7faa','#4a9bc7','#6fb3d6','#96cbe3','#b8dced','#1f5f82','#3a7fa3','#5d9fc7'];
-      const bgColors = labels.map((_, i) => colorPalette[i % colorPalette.length]);
-      balDonutChart = new Chart(balDonutCanvas, {
-        type: 'doughnut',
-        data: { labels: labels, datasets: [{ data: values, backgroundColor: bgColors, borderWidth: 2, borderColor: '#ffffff' }] },
-        options: { responsive: true, maintainAspectRatio: true, plugins: { legend: { position: 'bottom', labels: { boxWidth: 12, font: { size: 9 } } } }, cutout: '50%' }
-      });
-    }
-
-    // ================================================================
-    // BALANCES - Render
-    // ================================================================
-    function renderBalancesTable() {
-      if (balFilteredData.length === 0) {
-        balTbody.innerHTML = `<tr><td colspan="8" class="empty-state">${balFullData.length === 0 ? '⬆️ Upload Excel file with "Balance Collector" sheet' : 'No matching records'}</td></tr>`;
-      } else {
-        let html = '';
-        balFilteredData.forEach(row => {
-          const alloc = parseFloat(row.Allocation) || 0;
-          const oblig = parseFloat(row.Obligation) || 0;
-          const bal = parseFloat(row.Balance) || 0;
-          const util = alloc > 0 ? (oblig / alloc) * 100 : 0;
-          let utilBadge = '';
-          if (util > 80) utilBadge = `<span class="badge badge-success">${util.toFixed(1)}%</span>`;
-          else if (util > 50) utilBadge = `<span class="badge badge-warning">${util.toFixed(1)}%</span>`;
-          else utilBadge = `<span class="badge badge-danger">${util.toFixed(1)}%</span>`;
-          let balBadge = '';
-          if (bal > 1000000) balBadge = `<span class="badge badge-danger">₱ ${formatCurrency(bal)}</span>`;
-          else if (bal > 100000) balBadge = `<span class="badge badge-warning">₱ ${formatCurrency(bal)}</span>`;
-          else if (bal > 0) balBadge = `<span class="badge badge-success">₱ ${formatCurrency(bal)}</span>`;
-          else balBadge = `<span class="badge">₱ 0.00</span>`;
-          const partic = row.Particulars || '';
-          html += `<tr>
-            <td><span class="badge" style="background:#d6e6f5;">${row.Component || ''}</span></td>
-            <td>${row.Category || ''}</td>
-            <td>${row.ASASheet || ''}</td>
-            <td style="max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${partic}</td>
-            <td style="text-align:right;">₱ ${formatCurrency(alloc)}</td>
-            <td style="text-align:right;">₱ ${formatCurrency(oblig)}</td>
-            <td style="text-align:right; font-weight:600;">${balBadge}</td>
-            <td style="text-align:center;">${utilBadge}</td>
-          </tr>`;
-        });
-        balTbody.innerHTML = html;
-      }
-    }
-
-    function renderBalances() {
-      const searchTerm = balSearchInput.value.toLowerCase().trim();
-      const compVal = balCompFilter.value, catVal = balCatFilter.value;
-      const asaVal = balAsaFilter.value, minBalVal = balMinBalance.value;
-
-      let tempData = balFullData.filter(row => {
-        const matchSearch = !searchTerm || (row.Particulars && row.Particulars.toLowerCase().includes(searchTerm));
-        const matchComp = !compVal || row.Component === compVal;
-        const matchCat = !catVal || row.Category === catVal;
-        const matchAsa = !asaVal || row.ASASheet === asaVal;
-        let matchMinBal = true;
-        if (minBalVal !== '') {
-          const bal = parseFloat(row.Balance) || 0;
-          matchMinBal = bal >= parseFloat(minBalVal);
-        }
-        return matchSearch && matchComp && matchCat && matchAsa && matchMinBal;
-      });
-
-      balFilteredData = tempData;
-
-      if (balSortConfig.col !== null) {
-        const colKey = ['Component','Category','ASASheet','Particulars','Allocation','Obligation','Balance','Utilization'][balSortConfig.col];
-        balFilteredData.sort((a,b) => {
-          let va = a[colKey] ?? '', vb = b[colKey] ?? '';
-          if (['Allocation','Obligation','Balance'].includes(colKey)) {
-            va = parseFloat(va) || 0; vb = parseFloat(vb) || 0;
-          } else if (colKey === 'Utilization') {
-            const allocA = parseFloat(a.Allocation) || 0, obligA = parseFloat(a.Obligation) || 0;
-            const allocB = parseFloat(b.Allocation) || 0, obligB = parseFloat(b.Obligation) || 0;
-            va = allocA > 0 ? (obligA / allocA) * 100 : 0;
-            vb = allocB > 0 ? (obligB / allocB) * 100 : 0;
-          } else {
-            va = String(va).toLowerCase(); vb = String(vb).toLowerCase();
-          }
-          if (va < vb) return balSortConfig.asc ? -1 : 1;
-          if (va > vb) return balSortConfig.asc ? 1 : -1;
-          return 0;
-        });
-      }
-
-      renderBalancesTable();
-      updateBalancesKPIs();
-      updateBalAllocVsBalanceChart();
-      updateBalGaugeChart();
-      updateBalLowUtilChart();
-      updateBalCompChart();
-      updateBalCatChart();
-      updateBalAsaChart();
-      updateBalTopChart();
-      updateBalDonutChart();
-    }
-
-    // ================================================================
-    // BALANCES - Export
-    // ================================================================
-    function exportBalancesToExcel() {
-      if (balFilteredData.length === 0) { alert('No data to export.'); return; }
-      const exportRows = balFilteredData.map(row => {
-        const alloc = parseFloat(row.Allocation) || 0;
-        const oblig = parseFloat(row.Obligation) || 0;
-        const bal = parseFloat(row.Balance) || 0;
-        const util = alloc > 0 ? (oblig / alloc) * 100 : 0;
-        return {
-          'Component': row.Component || '', 'Category': row.Category || '',
-          'ASA Sheet': row.ASASheet || '', 'Particulars': row.Particulars || '',
-          'Allocation (₱)': alloc, 'Total Obligation (₱)': oblig,
-          'Balance (Alloc less Total Oblig) (₱)': bal,
-          'Utilization Rate (%)': util.toFixed(1)
-        };
-      });
-      const wb = XLSX.utils.book_new();
-      const ws = XLSX.utils.json_to_sheet(exportRows);
-      ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 25 }, { wch: 50 }, { wch: 18 }, { wch: 18 }, { wch: 22 }, { wch: 16 }];
-      XLSX.utils.book_append_sheet(wb, ws, 'Balances Data');
-      XLSX.writeFile(wb, `PRDP_RPCO1_Balances_Data_${new Date().toISOString().slice(0,10)}.xlsx`);
-    }
-
-    // ================================================================
-    // BALANCES - Event Listeners
-    // ================================================================
-    balSearchInput.addEventListener('input', renderBalances);
-    balCompFilter.addEventListener('change', renderBalances);
-    balCatFilter.addEventListener('change', renderBalances);
-    balAsaFilter.addEventListener('change', renderBalances);
-    balMinBalance.addEventListener('change', renderBalances);
-    balResetBtn.addEventListener('click', function() {
-      balSearchInput.value = ''; balCompFilter.value = ''; balCatFilter.value = '';
-      balAsaFilter.value = ''; balMinBalance.value = '';
-      balSortConfig = { col: null, asc: true };
-      renderBalances();
-    });
-    balExportBtn.addEventListener('click', exportBalancesToExcel);
-    balThead.addEventListener('click', function(e) {
-      const th = e.target.closest('th');
-      if (!th) return;
-      const col = parseInt(th.dataset.col);
-      if (isNaN(col)) return;
-      if (balSortConfig.col === col) { balSortConfig.asc = !balSortConfig.asc; } else { balSortConfig.col = col; balSortConfig.asc = true; }
-      renderBalances();
-    });
-
-    // ================================================================
-    // FILE UPLOAD
-    // ================================================================
-    fileInput.addEventListener('change', function(e) {
-      const file = e.target.files[0];
-      if (!file) return;
-      const reader = new FileReader();
-      reader.onload = function(loadEv) {
-        try {
-          const data = new Uint8Array(loadEv.target.result);
-          const workbook = XLSX.read(data, { type: 'array' });
-          loadEarmarkedData(workbook);
-          loadBalancesData(workbook);
-          fileStatus.textContent = `✅ Loaded Earmarked: ${fullData.length} rows, Balances: ${balFullData.length} rows`;
-          exportBtn.disabled = false;
-          balExportBtn.disabled = false;
-        } catch (err) {
-          alert('Error reading file: ' + err.message);
-        }
-      };
-      reader.readAsArrayBuffer(file);
-    });
-
-    function loadEarmarkedData(workbook) {
-      const sheetName = 'Earmarked Collector';
-      const sheet = workbook.Sheets[sheetName];
-      if (!sheet) { console.warn('Sheet "Earmarked Collector" not found.'); return; }
-      const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
-      if (!json || json.length === 0) return;
-
-      const headers = Object.keys(json[0]);
-      const findCol = (patterns) => {
-        for (const p of patterns) {
-          const found = headers.find(h => h.toLowerCase().includes(p.toLowerCase()));
-          if (found) return found;
-        }
-        return null;
-      };
-
-      const colComponent = findCol(['component']);
-      const colCategory = findCol(['category']);
-      const colASASheet = findCol(['asa sheet', 'asa']);
-      const colPRDate = findCol(['pr date', 'date']);
-      const colPRNo = findCol(['pr no', 'pr']);
-      const colParticulars = findCol(['particulars', 'description']);
-      const colEarmarked = findCol(['earmarked', 'amount']);
-
-      fullData = json.map(row => {
-        const rawDate = row[colPRDate];
-        const dateObj = parseExcelDate(rawDate);
-        let prNo = '';
-        if (colPRNo) { prNo = String(row[colPRNo] ?? '').trim(); }
-        if (!prNo) {
-          for (const key of headers) {
-            if (key.toLowerCase().includes('pr') && !key.toLowerCase().includes('date')) {
-              prNo = String(row[key] ?? '').trim();
-              if (prNo) break;
+          x: {
+            grid: {
+              display: false
             }
           }
-        }
-        return {
-          Component: colComponent ? String(row[colComponent] ?? '').trim() : '',
-          Category: colCategory ? String(row[colCategory] ?? '').trim() : '',
-          ASASheet: colASASheet ? String(row[colASASheet] ?? '').trim() : '',
-          PRDate: rawDate, _prDateObj: dateObj,
-          PRNo: prNo,
-          Particulars: colParticulars ? String(row[colParticulars] ?? '').trim() : '',
-          Earmarked: colEarmarked ? parseFloat(row[colEarmarked]) || 0 : 0,
-        };
-      }).filter(r => r.Component || r.Category || r.Particulars);
+        } 
+      }
+    });
 
-      const comps = [...new Set(fullData.map(r => r.Component).filter(Boolean))];
-      const cats = [...new Set(fullData.map(r => r.Category).filter(Boolean))];
-      const asas = [...new Set(fullData.map(r => r.ASASheet).filter(Boolean))];
-      compFilter.innerHTML = '<option value="">All Components</option>' + comps.map(c => `<option value="${c}">${c}</option>`).join('');
-      catFilter.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-      asaFilter.innerHTML = '<option value="">All ASA</option>' + asas.map(a => `<option value="${a}">${a}</option>`).join('');
+    const compMap = {};
+    oblFilteredData.forEach(r => { compMap[r.Component] = (compMap[r.Component] || 0) + r.ActualObligation; });
+    const compLabels = Object.keys(compMap).filter(k => k);
+    const compData = compLabels.map(k => compMap[k]);
+    if (oblCompChart) { oblCompChart.destroy(); }
+    oblCompChart = new Chart(document.getElementById('oblCompChart'), {
+      type: 'bar',
+      data: { labels: compLabels, datasets: [{ label: 'Obligation', data: compData, backgroundColor: '#2a7faa' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
 
-      sortConfig = { col: null, asc: true };
-      renderEarmarked();
+    const asaMap = {};
+    oblFilteredData.forEach(r => { asaMap[r.ASASheet] = (asaMap[r.ASASheet] || 0) + r.ActualObligation; });
+    const asaLabels = Object.keys(asaMap).filter(k => k);
+    const asaData = asaLabels.map(k => asaMap[k]);
+    if (oblAsaChart) { oblAsaChart.destroy(); }
+    oblAsaChart = new Chart(document.getElementById('oblAsaChart'), {
+      type: 'bar',
+      data: { labels: asaLabels, datasets: [{ label: 'Obligation', data: asaData, backgroundColor: '#8e44ad' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const catMap = {};
+    oblFilteredData.forEach(r => { catMap[r.Category] = (catMap[r.Category] || 0) + r.ActualObligation; });
+    const catLabels = Object.keys(catMap).filter(k => k);
+    const catData = catLabels.map(k => catMap[k]);
+    if (oblCatChart) { oblCatChart.destroy(); }
+    oblCatChart = new Chart(document.getElementById('oblCatChart'), {
+      type: 'bar',
+      data: { labels: catLabels, datasets: [{ label: 'Obligation', data: catData, backgroundColor: '#2980b9' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+
+    const sorted = oblFilteredData.slice().sort((a,b) => b.ActualObligation - a.ActualObligation).slice(0,10);
+    const topLabels = sorted.map(r => r.Particulars || r.Category || 'Item');
+    const topData = sorted.map(r => r.ActualObligation);
+    if (oblTopChart) { oblTopChart.destroy(); }
+    oblTopChart = new Chart(document.getElementById('oblTopChart'), {
+      type: 'bar',
+      data: { labels: topLabels, datasets: [{ label: 'Obligation', data: topData, backgroundColor: '#e67e22' }] },
+      options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+    });
+  }
+
+  oblSearchInput.addEventListener('input', renderObligation);
+  oblCompFilter.addEventListener('change', renderObligation);
+  oblCatFilter.addEventListener('change', renderObligation);
+  oblAsaFilter.addEventListener('change', renderObligation);
+  oblMinOblig.addEventListener('change', renderObligation);
+  oblResetBtn.addEventListener('click', function() {
+    oblSearchInput.value = ''; oblCompFilter.value = ''; oblCatFilter.value = ''; oblAsaFilter.value = ''; oblMinOblig.value = '';
+    oblSortConfig = { col: null, asc: true };
+    renderObligation();
+  });
+  oblExportBtn.addEventListener('click', function() {
+    if (oblFilteredData.length === 0) return;
+    const rows = oblFilteredData.map(r => ({ Component: r.Component, Category: r.Category, 'ASA Sheet': r.ASASheet, 'PR Date': r.PRDate ? formatDate(r.PRDate) : '', 'PR No.': r.PRNo, 'ORS Date': r.ORSDate ? formatDate(r.ORSDate) : '', 'ORS No.': r.ORSNo, Particulars: r.Particulars, 'Actual Obligation (₱)': r.ActualObligation }));
+    const wb = XLSX.utils.book_new(); const ws = XLSX.utils.json_to_sheet(rows);
+    ws['!cols'] = [{wch:20},{wch:25},{wch:20},{wch:15},{wch:15},{wch:15},{wch:15},{wch:40},{wch:18}];
+    XLSX.utils.book_append_sheet(wb, ws, 'Obligation');
+    XLSX.writeFile(wb, `PRDP_Obligation_${new Date().toISOString().slice(0,10)}.xlsx`);
+  });
+  oblThead.addEventListener('click', function(e) {
+    const th = e.target.closest('th'); if (!th) return;
+    const col = parseInt(th.dataset.col); if (isNaN(col)) return;
+    if (oblSortConfig.col === col) oblSortConfig.asc = !oblSortConfig.asc; else { oblSortConfig.col = col; oblSortConfig.asc = true; }
+    renderObligation();
+  });
+
+  // ================================================================
+  // RECONCILIATION (with Status column)
+  // ================================================================
+  const reconTbody = document.getElementById('recon-table-body');
+  const reconThead = document.getElementById('recon-table-head');
+  const reconSearchInput = document.getElementById('recon-search-input');
+  const reconCompFilter = document.getElementById('recon-component-filter');
+  const reconCatFilter = document.getElementById('recon-category-filter');
+  const reconAsaFilter = document.getElementById('recon-asa-filter');
+  const reconMinAlloc = document.getElementById('recon-min-alloc');
+  const reconStatusFilter = document.getElementById('recon-status-filter');
+  const reconResetBtn = document.getElementById('recon-reset-filters');
+  const reconExportBtn = document.getElementById('recon-export-btn');
+  const reconRowCounter = document.getElementById('recon-row-counter');
+  const reconCanvas = document.getElementById('reconStackedChart');
+  const reconFocusCanvas = document.getElementById('reconFocusChart');
+
+  // Helper function to determine status
+  function getStatus(row) {
+    if (row.Balance > (row.Actual * 2)) return 'critical';
+    if (row.Balance > row.Actual || row.Balance > row.Earmarked) return 'monitor';
+    return 'ok';
+  }
+
+  function getStatusBadge(status) {
+    if (status === 'critical') return '<span class="badge badge-critical">🚨 CRITICAL</span>';
+    if (status === 'monitor') return '<span class="badge badge-focus">⚠️ Monitor</span>';
+    return '<span class="badge badge-ok">✅ OK</span>';
+  }
+
+  function loadReconciliationData(workbook) {
+    const sheet = workbook.Sheets['Reconciliation'];
+    if (!sheet) { console.warn('Reconciliation sheet not found.'); return; }
+    const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
+    if (!json || json.length === 0) return;
+    const headers = Object.keys(json[0]);
+    const findCol = (patterns) => {
+      for (const p of patterns) {
+        const found = headers.find(h => h.toLowerCase().includes(p.toLowerCase()));
+        if (found) return found;
+      }
+      return null;
+    };
+    const colComponent = findCol(['component']);
+    const colCategory = findCol(['category']);
+    const colASASheet = findCol(['asa sheet', 'asa']);
+    const colActual = findCol(['actual']);
+    const colEarmarked = findCol(['earmarked']);
+    const colBalance = findCol(['balance']);
+    reconFullData = json.map(row => ({
+      Component: colComponent ? String(row[colComponent] ?? '').trim() : '',
+      Category: colCategory ? String(row[colCategory] ?? '').trim() : '',
+      ASASheet: colASASheet ? String(row[colASASheet] ?? '').trim() : '',
+      Actual: colActual ? parseNumber(row[colActual]) : 0,
+      Earmarked: colEarmarked ? parseNumber(row[colEarmarked]) : 0,
+      Balance: colBalance ? parseNumber(row[colBalance]) : 0,
+    })).filter(r => r.Component || r.Category || r.ASASheet || r.Actual > 0 || r.Earmarked > 0 || r.Balance > 0);
+    
+    if (reconFullData.length === 0) {
+      console.warn('No reconciliation data loaded');
+      return;
     }
+    
+    const comps = [...new Set(reconFullData.map(r => r.Component).filter(Boolean))];
+    const cats = [...new Set(reconFullData.map(r => r.Category).filter(Boolean))];
+    const asas = [...new Set(reconFullData.map(r => r.ASASheet).filter(Boolean))];
+    reconCompFilter.innerHTML = '<option value="">All Components</option>' + comps.map(c => `<option value="${c}">${c}</option>`).join('');
+    reconCatFilter.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
+    reconAsaFilter.innerHTML = '<option value="">All ASA</option>' + asas.map(a => `<option value="${a}">${a}</option>`).join('');
+    reconSortConfig = { col: null, asc: true };
+    renderReconciliation();
+  }
 
-    function loadBalancesData(workbook) {
-      const sheetName = 'Balance Collector';
-      const sheet = workbook.Sheets[sheetName];
-      if (!sheet) { console.warn('Sheet "Balance Collector" not found.'); return; }
-      const json = XLSX.utils.sheet_to_json(sheet, { defval: '', raw: true });
-      if (!json || json.length === 0) return;
+  function renderReconciliation() {
+    const searchTerm = reconSearchInput.value.toLowerCase().trim();
+    const compVal = reconCompFilter.value;
+    const catVal = reconCatFilter.value;
+    const asaVal = reconAsaFilter.value;
+    const minAllocVal = reconMinAlloc.value;
+    const statusVal = reconStatusFilter.value;
 
-      const headers = Object.keys(json[0]);
-      const findCol = (patterns) => {
-        for (const p of patterns) {
-          const found = headers.find(h => h.toLowerCase().includes(p.toLowerCase()));
-          if (found) return found;
-        }
-        return null;
-      };
-
-      const colComponent = findCol(['component']);
-      const colCategory = findCol(['category']);
-      const colASASheet = findCol(['asa sheet', 'asa']);
-      const colParticulars = findCol(['particulars', 'description']);
-      const colAllocation = findCol(['allocation', 'alloc']);
-      const colObligation = findCol(['obligation', 'oblig']);
+    let temp = reconFullData.filter(row => {
+      const matchSearch = !searchTerm || (row.Category && row.Category.toLowerCase().includes(searchTerm));
+      const matchComp = !compVal || row.Component === compVal;
+      const matchCat = !catVal || row.Category === catVal;
+      const matchAsa = !asaVal || row.ASASheet === asaVal;
       
-      const colBalance = headers.find(h => 
-        h.trim() === 'Balance (Alloc less Total Oblig)' ||
-        (h.toLowerCase().includes('balance') && h.toLowerCase().includes('total oblig'))
-      ) || findCol(['balance', 'bal']);
+      let matchMin = true;
+      if (minAllocVal !== '') {
+        const alloc = row.Actual + row.Balance;
+        matchMin = alloc >= parseFloat(minAllocVal);
+      }
+      
+      let matchStatus = true;
+      const status = getStatus(row);
+      if (statusVal === 'monitor') matchStatus = status === 'monitor' || status === 'critical';
+      else if (statusVal === 'critical') matchStatus = status === 'critical';
+      else if (statusVal === 'ok') matchStatus = status === 'ok';
+      
+      return matchSearch && matchComp && matchCat && matchAsa && matchMin && matchStatus;
+    });
 
-      balFullData = json.map(row => {
-        const alloc = colAllocation ? parseBalanceNumber(row[colAllocation]) : 0;
-        const oblig = colObligation ? parseBalanceNumber(row[colObligation]) : 0;
-        let bal = 0;
-        if (colBalance) { bal = parseBalanceNumber(row[colBalance]); } else { bal = alloc - oblig; }
-        return {
-          Component: colComponent ? String(row[colComponent] ?? '').trim() : '',
-          Category: colCategory ? String(row[colCategory] ?? '').trim() : '',
-          ASASheet: colASASheet ? String(row[colASASheet] ?? '').trim() : '',
-          Particulars: colParticulars ? String(row[colParticulars] ?? '').trim() : '',
-          Allocation: alloc,
-          Obligation: oblig,
-          Balance: bal,
-        };
-      }).filter(r => r.Component || r.Category || r.Particulars);
+    if (reconSortConfig.col !== null) {
+      const colKey = ['Component','Category','ASASheet','Actual','Earmarked','Balance','Allocation','Status'][reconSortConfig.col];
+      temp.sort((a,b) => {
+        let va, vb;
+        if (colKey === 'Allocation') {
+          va = a.Actual + a.Balance;
+          vb = b.Actual + b.Balance;
+        } else if (['Actual','Earmarked','Balance'].includes(colKey)) {
+          va = parseFloat(a[colKey] ?? 0);
+          vb = parseFloat(b[colKey] ?? 0);
+        } else if (colKey === 'Status') {
+          const statusOrder = { 'critical': 0, 'monitor': 1, 'ok': 2 };
+          va = statusOrder[getStatus(a)] ?? 3;
+          vb = statusOrder[getStatus(b)] ?? 3;
+        } else {
+          va = String(a[colKey] ?? '').toLowerCase();
+          vb = String(b[colKey] ?? '').toLowerCase();
+        }
+        if (va < vb) return reconSortConfig.asc ? -1 : 1;
+        if (va > vb) return reconSortConfig.asc ? 1 : -1;
+        return 0;
+      });
+    }
+    
+    reconFilteredData = temp;
 
-      const comps = [...new Set(balFullData.map(r => r.Component).filter(Boolean))];
-      const cats = [...new Set(balFullData.map(r => r.Category).filter(Boolean))];
-      const asas = [...new Set(balFullData.map(r => r.ASASheet).filter(Boolean))];
-      balCompFilter.innerHTML = '<option value="">All Components</option>' + comps.map(c => `<option value="${c}">${c}</option>`).join('');
-      balCatFilter.innerHTML = '<option value="">All Categories</option>' + cats.map(c => `<option value="${c}">${c}</option>`).join('');
-      balAsaFilter.innerHTML = '<option value="">All ASA</option>' + asas.map(a => `<option value="${a}">${a}</option>`).join('');
+    renderReconTable();
+    updateReconKPIs();
+    updateReconStackedChart();
+    updateReconFocusChart();
+  }
 
-      balSortConfig = { col: null, asc: true };
-      renderBalances();
+  function renderReconTable() {
+    if (reconFilteredData.length === 0) {
+      reconTbody.innerHTML = `<tr><td colspan="8" class="empty-state">${reconFullData.length === 0 ? '⬆️ Upload Excel file with "Reconciliation" sheet' : 'No matching records'}</td></tr>`;
+    } else {
+      let html = '';
+      reconFilteredData.forEach(row => {
+        const alloc = row.Actual + row.Balance;
+        const status = getStatus(row);
+        const isCritical = status === 'critical';
+        const isMonitor = status === 'monitor';
+        let rowClass = '';
+        if (isCritical) rowClass = 'critical-row';
+        else if (isMonitor) rowClass = 'focus-row';
+        
+        html += `<tr class="${rowClass}">
+          <td><span class="badge" style="background:#d6e6f5;">${row.Component || ''}</span></td>
+          <td>${row.Category || ''}</td>
+          <td>${row.ASASheet || ''}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.Actual)}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.Earmarked)}</td>
+          <td style="text-align:right;font-weight:500;">₱ ${formatCurrency(row.Balance)}</td>
+          <td style="text-align:center;"><span class="badge badge-info">₱ ${formatCurrency(alloc)}</span></td>
+          <td style="text-align:center;">${getStatusBadge(status)}</td>
+        </tr>`;
+      });
+      reconTbody.innerHTML = html;
+    }
+    reconRowCounter.textContent = reconFilteredData.length + ' rows';
+    reconExportBtn.disabled = reconFilteredData.length === 0;
+  }
+
+  function updateReconKPIs() {
+    const totalActual = reconFullData.reduce((s, r) => s + r.Actual, 0);
+    const totalEarmarked = reconFullData.reduce((s, r) => s + r.Earmarked, 0);
+    const totalBalance = reconFullData.reduce((s, r) => s + r.Balance, 0);
+    document.getElementById('kpi-recon-actual').textContent = '₱ ' + formatCurrency(totalActual);
+    document.getElementById('kpi-recon-earmarked').textContent = '₱ ' + formatCurrency(totalEarmarked);
+    document.getElementById('kpi-recon-balance').textContent = '₱ ' + formatCurrency(totalBalance);
+    const cats = new Set(reconFullData.map(r => r.Category).filter(Boolean));
+    document.getElementById('kpi-recon-cats').textContent = cats.size;
+    document.getElementById('kpi-recon-alloc').textContent = '₱ ' + formatCurrency(totalActual + totalBalance);
+
+    // Focus KPIs
+    const monitorItems = reconFullData.filter(r => getStatus(r) === 'monitor' || getStatus(r) === 'critical').length;
+    const criticalItems = reconFullData.filter(r => getStatus(r) === 'critical').length;
+    const criticalTotal = reconFullData.filter(r => getStatus(r) === 'critical').reduce((s, r) => s + r.Balance, 0);
+    const largestBalance = reconFullData.reduce((max, r) => r.Balance > max ? r.Balance : max, 0);
+    
+    document.getElementById('kpi-recon-monitor').textContent = monitorItems;
+    document.getElementById('kpi-recon-critical').textContent = criticalItems;
+    document.getElementById('kpi-recon-critical-total').textContent = '₱ ' + formatCurrency(criticalTotal);
+    document.getElementById('kpi-recon-largest-bal').textContent = '₱ ' + formatCurrency(largestBalance);
+
+    // Filtered KPIs
+    const filtActual = reconFilteredData.reduce((s, r) => s + r.Actual, 0);
+    const filtEarmarked = reconFilteredData.reduce((s, r) => s + r.Earmarked, 0);
+    const filtBalance = reconFilteredData.reduce((s, r) => s + r.Balance, 0);
+    document.getElementById('kpi-recon-filt-actual').textContent = '₱ ' + formatCurrency(filtActual);
+    document.getElementById('kpi-recon-filt-earmarked').textContent = '₱ ' + formatCurrency(filtEarmarked);
+    document.getElementById('kpi-recon-filt-balance').textContent = '₱ ' + formatCurrency(filtBalance);
+    const filtCats = new Set(reconFilteredData.map(r => r.Category).filter(Boolean));
+    document.getElementById('kpi-recon-filt-cats').textContent = filtCats.size;
+    document.getElementById('kpi-recon-filt-alloc').textContent = '₱ ' + formatCurrency(filtActual + filtBalance);
+  }
+
+  function updateReconStackedChart() {
+    const map = new Map();
+    const dataToChart = reconFilteredData.length > 0 ? reconFilteredData : reconFullData;
+    dataToChart.forEach(row => {
+      const key = row.Category || row.Component || 'Uncategorized';
+      if (!map.has(key)) map.set(key, { Actual: 0, Earmarked: 0, Balance: 0 });
+      const d = map.get(key);
+      d.Actual += row.Actual;
+      d.Earmarked += row.Earmarked;
+      d.Balance += row.Balance;
+    });
+    const sorted = Array.from(map.entries()).sort((a, b) => (b[1].Actual + b[1].Balance) - (a[1].Actual + a[1].Balance));
+    const labels = sorted.map(item => item[0]);
+    const actuals = sorted.map(item => item[1].Actual);
+    const earmarked = sorted.map(item => item[1].Earmarked);
+    const balances = sorted.map(item => item[1].Balance);
+    const totals = sorted.map(item => item[1].Actual + item[1].Earmarked + item[1].Balance);
+
+    if (reconStackedChart) { reconStackedChart.destroy(); reconStackedChart = null; }
+
+    if (labels.length === 0) {
+      reconStackedChart = new Chart(reconCanvas, {
+        type: 'bar',
+        data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
+        options: { plugins: { legend: { display: false } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, max: 100 } } }
+      });
+      return;
     }
 
-    // ================================================================
-    // INIT - Empty charts
-    // ================================================================
-    barChart = new Chart(barCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    agingChart = new Chart(agingCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    trendChart = new Chart(trendCanvas, { type: 'line', data: { labels: ['No data'], datasets: [{ data: [0], borderColor: '#d1dbe6', backgroundColor: 'transparent' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    asaChart = new Chart(asaCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    categoryChart = new Chart(categoryCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+    const pctActual = actuals.map((v, i) => totals[i] > 0 ? (v / totals[i]) * 100 : 0);
+    const pctEarmarked = earmarked.map((v, i) => totals[i] > 0 ? (v / totals[i]) * 100 : 0);
+    const pctBalance = balances.map((v, i) => totals[i] > 0 ? (v / totals[i]) * 100 : 0);
 
-    balCompChart = new Chart(balCompCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    balCatChart = new Chart(balCatCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    balAsaChart = new Chart(balAsaCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
-    balTopChart = new Chart(balTopCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } } });
-    balDonutChart = new Chart(balDonutCanvas, { type: 'doughnut', data: { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#d1dbe6'] }] }, options: { plugins: { legend: { display: false } }, cutout: '50%' } });
-    balAllocVsBalanceChart = new Chart(balAllocVsBalanceCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, indexAxis: 'y', scales: { x: { beginAtZero: true } } } });
-    balGaugeChart = new Chart(balGaugeCanvas, { type: 'doughnut', data: { labels: ['No data'], datasets: [{ data: [1], backgroundColor: ['#d1dbe6'] }] }, options: { plugins: { legend: { display: false } }, cutout: '72%' } });
-    balLowUtilChart = new Chart(balLowUtilCanvas, { type: 'bar', data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] }, options: { plugins: { legend: { display: false } }, indexAxis: 'y', scales: { x: { beginAtZero: true, max: 100 } } } });
+    reconStackedChart = new Chart(reconCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Actual', data: pctActual, backgroundColor: '#2a7faa' },
+          { label: 'Earmarked', data: pctEarmarked, backgroundColor: '#f39c12' },
+          { label: 'Balance', data: pctBalance, backgroundColor: '#27ae60' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 12, font: { size: 9 } } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                const rawVal = ctx.dataset.data[ctx.dataIndex];
+                return ctx.dataset.label + ': ' + rawVal.toFixed(1) + '%';
+              },
+              footer: function() { return 'Total: 100%'; }
+            }
+          },
+          datalabels: {
+            color: '#ffffff',
+            font: { weight: 'bold', size: 10 },
+            formatter: function(value) {
+              if (value < 4) return '';
+              return value.toFixed(0) + '%';
+            },
+            anchor: 'center',
+            align: 'center',
+            display: function(context) {
+              const val = context.dataset.data[context.dataIndex];
+              return val >= 4;
+            }
+          }
+        },
+        scales: {
+          x: { stacked: true, ticks: { font: { size: 8 } } },
+          y: { stacked: true, beginAtZero: true, max: 100, ticks: { callback: v => v + '%', font: { size: 9 } } }
+        }
+      },
+      plugins: [ChartDataLabels]
+    });
+  }
 
-    window.chartInstances = [
-      barChart, agingChart, trendChart, asaChart, categoryChart,
-      balCompChart, balCatChart, balAsaChart, balTopChart, balDonutChart,
-      balAllocVsBalanceChart, balGaugeChart, balLowUtilChart
-    ];
+  function updateReconFocusChart() {
+    // Show ONLY Critical items (Balance > 2x Actual)
+    const criticalItems = reconFullData.filter(row => getStatus(row) === 'critical');
+    const sorted = criticalItems.sort((a,b) => b.Balance - a.Balance).slice(0, 15);
+    
+    if (reconFocusChart) { reconFocusChart.destroy(); reconFocusChart = null; }
 
-  })();
+    if (sorted.length === 0) {
+      reconFocusChart = new Chart(reconFocusCanvas, {
+        type: 'bar',
+        data: { labels: ['No critical items'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
+        options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+      });
+      return;
+    }
+
+    const labels = sorted.map(r => r.Category || r.Component || 'Item');
+    const balanceData = sorted.map(r => r.Balance);
+    const actualData = sorted.map(r => r.Actual);
+    const earmarkedData = sorted.map(r => r.Earmarked);
+
+    reconFocusChart = new Chart(reconFocusCanvas, {
+      type: 'bar',
+      data: {
+        labels: labels,
+        datasets: [
+          { label: 'Balance', data: balanceData, backgroundColor: '#c0392b' },
+          { label: 'Actual', data: actualData, backgroundColor: '#2a7faa' },
+          { label: 'Earmarked', data: earmarkedData, backgroundColor: '#f39c12' }
+        ]
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: true,
+        plugins: {
+          legend: { position: 'top', labels: { boxWidth: 12, font: { size: 9 } } },
+          tooltip: {
+            callbacks: {
+              label: function(ctx) {
+                return ctx.dataset.label + ': ₱ ' + formatCurrency(ctx.parsed.y);
+              }
+            }
+          }
+        },
+        scales: {
+          x: { ticks: { font: { size: 8 } } },
+          y: { beginAtZero: true, ticks: { callback: v => '₱' + (v / 1000000).toFixed(1) + 'M', font: { size: 9 } } }
+        }
+      }
+    });
+  }
+
+  function exportReconToExcel() {
+    if (reconFilteredData.length === 0) { alert('No data to export.'); return; }
+    const exportRows = reconFilteredData.map(row => ({
+      'Component': row.Component || '',
+      'Category': row.Category || '',
+      'ASA Sheet': row.ASASheet || '',
+      'Actual (₱)': row.Actual,
+      'Earmarked (₱)': row.Earmarked,
+      'Balance (₱)': row.Balance,
+      'Allocation (Actual+Bal)': row.Actual + row.Balance,
+      'Status': getStatus(row).toUpperCase()
+    }));
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.json_to_sheet(exportRows);
+    ws['!cols'] = [{ wch: 20 }, { wch: 35 }, { wch: 25 }, { wch: 18 }, { wch: 18 }, { wch: 18 }, { wch: 22 }, { wch: 12 }];
+    XLSX.utils.book_append_sheet(wb, ws, 'Reconciliation');
+    XLSX.writeFile(wb, `PRDP_RPCO1_Reconciliation_${new Date().toISOString().slice(0,10)}.xlsx`);
+  }
+
+  // Event listeners for reconciliation
+  reconSearchInput.addEventListener('input', renderReconciliation);
+  reconCompFilter.addEventListener('change', renderReconciliation);
+  reconCatFilter.addEventListener('change', renderReconciliation);
+  reconAsaFilter.addEventListener('change', renderReconciliation);
+  reconMinAlloc.addEventListener('change', renderReconciliation);
+  reconStatusFilter.addEventListener('change', renderReconciliation);
+  reconResetBtn.addEventListener('click', function() {
+    reconSearchInput.value = ''; 
+    reconCompFilter.value = ''; 
+    reconCatFilter.value = '';
+    reconAsaFilter.value = ''; 
+    reconMinAlloc.value = ''; 
+    reconStatusFilter.value = '';
+    reconSortConfig = { col: null, asc: true };
+    renderReconciliation();
+  });
+  reconExportBtn.addEventListener('click', exportReconToExcel);
+  
+  reconThead.addEventListener('click', function(e) {
+    const th = e.target.closest('th');
+    if (!th) return;
+    const col = parseInt(th.dataset.col);
+    if (isNaN(col)) return;
+    if (reconSortConfig.col === col) {
+      reconSortConfig.asc = !reconSortConfig.asc;
+    } else {
+      reconSortConfig.col = col;
+      reconSortConfig.asc = true;
+    }
+    renderReconciliation();
+  });
+
+  // ================================================================
+  // FILE UPLOAD
+  // ================================================================
+  const fileInputElem = document.getElementById('file-input');
+  const fileStatusElem = document.getElementById('file-status');
+
+  fileInputElem.addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    fileStatusElem.textContent = '⏳ Loading...';
+    
+    const reader = new FileReader();
+    reader.onload = function(loadEv) {
+      try {
+        const data = new Uint8Array(loadEv.target.result);
+        const workbook = XLSX.read(data, { type: 'array' });
+        
+        loadEarmarkedData(workbook);
+        loadBalancesData(workbook);
+        loadObligationData(workbook);
+        loadReconciliationData(workbook);
+        
+        const totalRows = fullData.length + balFullData.length + oblFullData.length + reconFullData.length;
+        fileStatusElem.textContent = `✅ Loaded: Earmarked(${fullData.length}), Balances(${balFullData.length}), Obligation(${oblFullData.length}), Recon(${reconFullData.length})`;
+        
+        document.querySelectorAll('.btn-export').forEach(b => b.disabled = false);
+        
+        if (fullData.length > 0) {
+          document.querySelector('[data-tab="earmarked"]').click();
+        }
+      } catch (err) {
+        console.error('Error reading file:', err);
+        fileStatusElem.textContent = '❌ Error loading file: ' + err.message;
+        alert('Error reading file: ' + err.message);
+      }
+    };
+    reader.onerror = function() {
+      fileStatusElem.textContent = '❌ Error reading file';
+      alert('Error reading file');
+    };
+    reader.readAsArrayBuffer(file);
+  });
+
+  // ================================================================
+  // TAB SWITCHING
+  // ================================================================
+  document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+      document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      this.classList.add('active');
+      document.getElementById('tab-' + this.dataset.tab).classList.add('active');
+      
+      setTimeout(() => {
+        if (window.chartInstances) {
+          window.chartInstances.forEach(chart => {
+            if (chart && chart.resize) chart.resize();
+          });
+        }
+      }, 100);
+    });
+  });
+
+  // ================================================================
+  // INIT - empty charts
+  // ================================================================
+  trendChart = new Chart(document.getElementById('trendChart'), { type: 'line', data: { labels: MONTH_NAMES, datasets: [{ data: new Array(12).fill(0), borderColor: '#2a7faa', backgroundColor: 'rgba(42, 127, 170, 0.1)', fill: true }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+  agingChart = new Chart(document.getElementById('agingChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  barChart = new Chart(document.getElementById('barChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  asaChart = new Chart(document.getElementById('asaChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  categoryChart = new Chart(document.getElementById('categoryChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  
+  balCompChart = new Chart(document.getElementById('balCompChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balCatChart = new Chart(document.getElementById('balCatChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balAsaChart = new Chart(document.getElementById('balAsaChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balTopChart = new Chart(document.getElementById('balTopChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balDonutChart = new Chart(document.getElementById('balDonutChart'), { type: 'doughnut', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balAllocVsBalanceChart = new Chart(document.getElementById('balAllocVsBalanceChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balGaugeChart = new Chart(document.getElementById('balGaugeChart'), { type: 'doughnut', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  balLowUtilChart = new Chart(document.getElementById('balLowUtilChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  
+  oblTrendChart = new Chart(document.getElementById('oblTrendChart'), { type: 'line', data: { labels: MONTH_NAMES, datasets: [{ data: new Array(12).fill(0), borderColor: '#2a7faa', backgroundColor: 'rgba(42, 127, 170, 0.1)', fill: true }] }, options: { responsive: true, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } } });
+  oblCompChart = new Chart(document.getElementById('oblCompChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  oblCatChart = new Chart(document.getElementById('oblCatChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  oblAsaChart = new Chart(document.getElementById('oblAsaChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  oblTopChart = new Chart(document.getElementById('oblTopChart'), { type: 'bar', data: { labels: [], datasets: [] }, options: { responsive: true } });
+  
+  reconStackedChart = new Chart(reconCanvas, {
+    type: 'bar',
+    data: { labels: ['No data'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
+    options: { plugins: { legend: { display: false } }, scales: { x: { stacked: true }, y: { stacked: true, beginAtZero: true, max: 100 } } }
+  });
+  
+  reconFocusChart = new Chart(reconFocusCanvas, {
+    type: 'bar',
+    data: { labels: ['No critical items'], datasets: [{ data: [0], backgroundColor: '#d1dbe6' }] },
+    options: { plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true } } }
+  });
+
+  window.chartInstances = [
+    trendChart, agingChart, barChart, asaChart, categoryChart,
+    balCompChart, balCatChart, balAsaChart, balTopChart, balDonutChart,
+    balAllocVsBalanceChart, balGaugeChart, balLowUtilChart,
+    oblTrendChart, oblCompChart, oblCatChart, oblAsaChart, oblTopChart,
+    reconStackedChart, reconFocusChart
+  ];
+
+  console.log('Dashboard ready. Upload an Excel file to get started.');
+  console.log('💡 Status definitions: CRITICAL (Balance > 2x Actual), MONITOR (Balance > Actual or Earmarked), OK (all good)');
 </script>
 </body>
 </html>
